@@ -149,32 +149,59 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
     % panel divider and y labels
     G.A5 = axes('Units', 'Normalized', 'Position', [0 .579 .05 .02],'XColor','w','YColor','w');
     hold(G.A5,'on');
-    plot(G.A5,[0 10000],[0 0],'k','LineWidth',2)
     set(G.A5,'Box','off','XLim',[0 1],'YLim',[0 0.1],'XTick',[],'YTick',[],'Clipping','off')
     G.A5.Toolbar.Visible = 'off';
+    
+    % EEG spectrogram
+    G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.75 0.87 0.11]);
+    G.A3.Toolbar.Visible = 'off';
+    ylabel(G.A3, 'Spec.');
+    set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
+    
+    % Log Emg
+    G.A4 = axes('Units', 'Normalized', 'Position', [0.05 0.66  0.87 0.07]);
+    G.A4.Toolbar.Visible = 'off';
+    ylabel(G.A4, 'Filtered EMG(20-50)');
+    axis(G.A4, 'off');
+    
+    % EEG signal - 1 Minute
+    G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.52, 0.87 .11]);
+    G.A6a.Toolbar.Visible = 'off';
+    set(G.A6a,'XTick',[])
+    ylabel(G.A6a, 'EEG1');
+    
+    % % EMG signal - 1 Minute
+    G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.35 0.87 .11]);
+    G.A7a.Toolbar.Visible = 'off';
+    ylabel(G.A7a, 'EMG1');
+    
+    % EEG signal
+    G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.18 0.87 .11]);
+    G.A6.Toolbar.Visible = 'off';
+    ylabel(G.A6, 'EEG2');
+    
+    % EMG signal
+    G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.03 0.87 .11]);
+    G.A7.Toolbar.Visible = 'off';
+    ylabel(G.A7, 'EMG2');
+    
     % Upper sleep stage labels
     G.A1 = axes('Units', 'Normalized', 'Position', [0.05 0.915 0.87 0.08]);
     G.A1.Toolbar.Visible = 'off';
-    % EEG spectrogram
-    G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.735 0.87 0.16]);
-    G.A3.Toolbar.Visible = 'off';
-    set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
-    % EMG signal
-    G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.21 0.87 .175]);
-    G.A6.Toolbar.Visible = 'off';
-    % EEG signal
-    G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.385 0.87 .175]);
-    G.A6a.Toolbar.Visible = 'off';
-    % Lower sleep stage labels
-    G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.16]);
-    G.A7.Toolbar.Visible = 'off';
+    % Rotated label
+    ylabel(G.A1, 'State');
+    
     % Time point indicator
     G.A2 = axes('Units', 'Normalized', 'Position', [0.05 0.895  0.87 0.02],'XTick',[],'YTick',[]);
     G.A2.Toolbar.Visible = 'off';
-    % Processed emg
-    G.A4 = axes('Units', 'Normalized', 'Position', [0.05 0.58  0.87 0.12]);
-    G.A4.Toolbar.Visible = 'off';
-    axis(G.A4, 'off');
+    
+    
+    % axis labels - old
+    % text(G.A5,0.05,1.87,'State')
+    % text(G.A5,0.05,-.1,'EEG1(mV)')
+    % text(G.A5,0.05,-.9,'EMG1(mV)')
+    % text(G.A5,0.05,-1.6,'EEG2(mV)')
+    % text(G.A5,0.05,-2.35,'EMG2(mV)')
     
     linkaxes([G.A1, G.A2, G.A3, G.A4], 'x'); % upper panel x axes should stay linked
     
@@ -203,6 +230,18 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
     G.zoomoutbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
         'Position',[.93 .63 .062 .025],'String','Zoom OUT','Callback',@fct_zoomout_t,...
         'FontSize',9,'ToolTip','Decrease zoom level (-)');
+    % % Create a text box for EEG amplitude display, placed above or below the buttons:
+    % G.EEGprev_ampDisplay = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    %     'Position', [.925 .4 .07 .035], 'String', '-- to --', ...
+    %     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+    % % Create a text box for EEG amplitude display, placed above or below the buttons:
+    % G.EEG_ampDisplay = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    %     'Position', [.925 .295 .07 .035], 'String', '-- to --', ...
+    %     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+    % % Create a text box for EMG amplitude display, placed above or below the buttons:
+    % G.EMG_ampDisplay = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    %     'Position', [.925 .18 .07 .035], 'String', '-- to --', ...
+    %     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
     G.zoomresetbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
         'Position',[.93 .595 .062 .025],'String','Reset zoom','Callback',@fct_zoomreset_t,...
         'FontSize',9,'ToolTip','Reset zoom level (0)');
@@ -251,14 +290,6 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
         'Position',[.93 .005 .062 .06],'String','<html>Auto-<br>scroll','Callback',@scrollCallback,...
         'FontSize',9,'ToolTip','Advance to next time step after assigning label (insert)');
     
-    % axis labels
-    text(G.A5,0.05,1.87,'State')
-    text(G.A5,0.05,1.15,'EEG')
-    text(G.A5,0.05,.72,'Time (hr)')
-    text(G.A5,0.05,.33,'EMG')
-    text(G.A5,0.05,-.59,'EEG')
-    text(G.A5,0.05,-1.33,'EMG')
-    text(G.A5,0.05,-2.38,'State')
     
     % keep track of the current timepoint
     G.index = 1; % index of current time point
@@ -278,6 +309,18 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
     yr = max(G.cappedEMG) - min(G.cappedEMG); % adjust y limits
     set(G.A4,'XTick',[],'YTick',[],'box','off',...
         'YLim',[min(G.cappedEMG) - .02*yr, max(G.cappedEMG) + .02*yr])
+    % y_min = min(G.cappedEMG) - 0.02 * yr;        % add 2% margin below
+    % y_max = max(G.cappedEMG) + 0.02 * yr;        % add 2% margin above
+    
+    % % Optionally, round the tick values to one decimal place:
+    % customTicks = round(linspace(y_min, y_max, 6), 1);
+    % 
+    % % Set the y-axis properties on the axes handle G.A4:
+    % set(G.A4, 'YLim', [y_min, y_max], 'YTick', customTicks, 'YTickMode', 'manual');
+    % 
+    % % Optionally, display these values for verification:
+    % fprintf('Dynamic y-axis limits: [%.2f, %.2f]\n', y_min, y_max);
+    % fprintf('Custom YTick values: %s\n', mat2str(customTicks));
     
     % Upper sleep stages
     box(G.A1, 'on');
@@ -306,31 +349,9 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
                 gi = G.nbins-(G.mid-1);
                 tp = gi*G.epochLen-G.epochLen/2;
             end
-            
-            seq=G.labels((1:G.show)+gi-G.mid+(G.mid-gi)*(gi<G.mid)-...
-                (gi-G.nbins+(G.mid-1))*(gi>(G.nbins-(G.mid-1))));
-            x = -n:n;
-            
-            cla(G.A7)
-            hold(G.A7,'on')
-            xlim(G.A7, [-n-0.5 n+0.5]);
-            ylim(G.A7, [0.5 3.5]);
-            set(G.A7, 'XLimMode','manual', 'YLimMode','manual');
-            
-            for i = 1:length(seq)
-                if seq(i)==4
-                    pX = [x(i)-.5, x(i)+.5, x(i)+.5, x(i)-.5];
-                    pY = [3.5, 3.5, .5, .5];
-                    patch(G.A7,pX,pY,G.colors(seq(i)+1,:),'EdgeColor','none');
-                else
-                    pX = [x(i)-.5, x(i)+.5, x(i)+.5, x(i)-.5];
-                    pY = [seq(i)+.5, seq(i)+.5, seq(i)-.5, seq(i)-.5];
-                    patch(G.A7,pX,pY,G.colors(seq(i)+1,:),'EdgeColor','none');
-                end
-            end
-            
-            set(G.A7, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'Wake', 'NREM'});
-            box(G.A7, 'off');
+    
+            yr = max(G.cappedEMG) - min(G.cappedEMG);  % range of the data
+        
             
             % plot EEG and EMG
             n = round((G.show*G.epochLen)/G.dt/2); % number of samples on either side to show
@@ -340,45 +361,337 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
             ii(ii<=0) = 1;
             ii(ii>=G.eegLen) = G.eegLen;
             
-            cla(G.A6);
+            % --- Plot Processed EMG on G.A7 with Dynamic Y-Axis ---
+            cla(G.A7);
+            hold(G.A7, 'on');
+            xlim(G.A7, [t(1)-G.dt, t(end)]);
+            
+            % Compute dynamic y-axis limits from the current EMG window data (in volts)
+            curEMG = G.EMG(ii);
+            y_min_EMG = min(curEMG);
+            y_max_EMG = max(curEMG);
+            yr_EMG = y_max_EMG - y_min_EMG;
+            padding_EMG = 0.02 * yr_EMG;
+            
+            if yr_EMG < eps
+                y_min_dyn_EMG = y_min_EMG - 0.1;
+                y_max_dyn_EMG = y_max_EMG + 0.1;
+            else
+                y_min_dyn_EMG = y_min_EMG - padding_EMG;
+                y_max_dyn_EMG = y_max_EMG + padding_EMG;
+            end
+            
+            if y_min_dyn_EMG >= y_max_dyn_EMG
+                y_max_dyn_EMG = y_min_dyn_EMG + 0.1;
+            end
+            
+            % Apply the dynamic y-axis limits (data remain in volts)
+            % ylim(G.A7, [y_min_dyn_EMG, y_max_dyn_EMG]);
+            % set(G.A7, 'XLimMode','manual', 'YLimMode','manual');
+    
+    
+            
+            % Plot the EMG data (in volts)
+            globalMin_EMG = min(G.EMG);  
+            globalMax_EMG = max(G.EMG);  
+            globalRange_EMG = globalMax_EMG - globalMin_EMG;
+            padding_EMG = 0.02 * globalRange_EMG;  
+            
+            stableMin_EMG = globalMin_EMG - padding_EMG;
+            stableMax_EMG = globalMax_EMG + padding_EMG;
+            
+            % --- In updatePlots, apply the stable EEG axis limits ---
+            set(G.A7, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
+            line(G.A7, t, curEMG, 'Color', 'k', 'LineWidth', 1);
+            % Plot red indicator lines for current epoch boundaries:
+            indicatorHeight_EMG = 0.1 * (globalRange_EMG);  % Height based on current axis range
+            
+            % Vertical line at left epoch boundary (starts at bottom, points upward)
+            line(G.A7, ones(1,2)*(G.timepointS - G.epochLen/2),[globalMin_EMG, globalMin_EMG + indicatorHeight_EMG],'Color','r', 'LineWidth', 0.5);
+            
+            % Vertical line at right epoch boundary (starts at bottom, points upward)
+            line(G.A7, ones(1,2)*(G.timepointS + G.epochLen/2),[globalMin_EMG, globalMin_EMG + indicatorHeight_EMG],'Color','r', 'LineWidth', 0.5);
+            
+    
+            % Horizontal line connecting the tops of the vertical markers
+            line(G.A7, [G.timepointS - G.epochLen/2, G.timepointS + G.epochLen/2], [globalMin_EMG, globalMin_EMG], 'Color','r', 'LineWidth', 0.5);
+    
+    
+        
+    
+            % 
+            % desiredNumTicks = 4;
+            % precision = 2;  % display precision: one decimal (in mV)
+            % 
+            % % Convert dynamic limits from volts to mV:
+            % y_min_dyn_EMG_mV = y_min_dyn_EMG * 1000;
+            % y_max_dyn_EMG_mV = y_max_dyn_EMG * 1000;
+            % 
+            % % Generate 4 evenly spaced tick marks between dynamic limits (in mV)
+            % customTicks_mV = linspace(y_min_dyn_EMG_mV, y_max_dyn_EMG_mV, desiredNumTicks);
+            % 
+            % % Force endpoints to match the dynamic limits exactly (in mV)
+            % customTicks_mV(1) = round(y_min_dyn_EMG_mV, precision);
+            % customTicks_mV(end) = round(y_max_dyn_EMG_mV, precision);
+            % 
+            % % Ensure final tick values are rounded to one decimal (in mV)
+            % customTicks_mV = round(customTicks_mV, precision);
+            % EMG_amp_min_mV = customTicks_mV(1) * 1000;
+            % EMG_amp_max_mV = customTicks_mV(end) * 1000;
+            % EMG_amplitudeStr = sprintf('%d to %d mV', EMG_amp_min_mV, EMG_amp_max_mV);
+            % % set(G.EMG_ampDisplay, 'String', EMG_amplitudeStr);
+            % 
+            % % Check if the tick vector is strictly increasing and has no duplicates
+            % if numel(unique(customTicks_mV)) < desiredNumTicks || any(diff(customTicks_mV) <= 0)
+            %     % Fallback to predefined ticks that are valid after rounding
+            %     customTicks_mV = [-0.2, -0.1, 0.1, 0.2];
+            %     customTicks_mV = round(customTicks_mV, precision);
+            % end
+            % 
+            % % Set the YTick values on G.A7 (convert mV back to volts)
+            % set(G.A7, 'YTick', customTicks_mV / 1000, 'YTickMode', 'manual');
+            % 
+            % % Format tick labels for display (in mV)
+            % formattedTicks_EMG = arrayfun(@(x) sprintf('%.1f', x), customTicks_mV, 'UniformOutput', false);
+            % set(G.A7, 'YTickLabel', formattedTicks_EMG, 'YTickMode', 'manual');
+            % 
+            % % Verification output:
+            % currentYLim_EMG = get(G.A7, 'YLim');
+            % disp(['Dynamic EMG Y-axis limits: ', num2str(currentYLim_EMG)]);
+            % disp(['Underlying EMG YTick values: ', mat2str(customTicks_mV)]);
+            % disp(['Displayed EMG YTick labels: ', strjoin(formattedTicks_EMG, ', ')]);
+    
+    
+    
+            % --- Compute Global EMG Limits (in volts) ---
+            globalMin_EEG = min(G.EEG);  
+            globalMax_EEG = max(G.EEG);  
+            globalRange_EEG = globalMax_EEG - globalMin_EEG;
+            padding_EEG = 0.02 * globalRange_EEG;  
+            
+            stableMin_EEG = globalMin_EEG - padding_EEG;
+            stableMax_EEG = globalMax_EEG + padding_EEG;
+            
+            % --- In updatePlots, apply the stable EEG axis limits ---
+            set(G.A6, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
+            set(G.A6,'XTick',[])
+            
+            
+            cla(G.A6)
             hold(G.A6, 'on');
             xlim(G.A6,[t(1)-G.dt t(end)]);
-            ylim(G.A6,G.emgYlim);
-            set(G.A6, 'XLimMode','manual', 'YLimMode','manual');
-            line(G.A6,t, G.EMG(ii), 'Color','k', 'LineWidth', 1); % plot EMG
-            % plot indicator for current time bin
-            line(G.A6,ones(1,2).*(G.timepointS-G.epochLen/2), [G.emgYlim(1),...
-                G.emgYlim(1)+.1*diff(G.emgYlim)],'Color','r','LineWidth', .5);
-            line(G.A6,ones(1,2).*(G.timepointS+G.epochLen/2), [G.emgYlim(1),...
-                G.emgYlim(1)+.1*diff(G.emgYlim)],'Color','r', 'LineWidth', .5);
-            line(G.A6,[G.timepointS-G.epochLen/2, G.timepointS+G.epochLen/2], [G.emgYlim(1) G.emgYlim(1)],...
-                'Color','r', 'LineWidth', .5);
-            
-            
-            cla(G.A6a)
-            hold(G.A6a, 'on');
-            xlim(G.A6a,[t(1)-G.dt t(end)]);
-            ylim(G.A6a,G.eegYlim);
-            set(G.A6a, 'XLimMode','manual', 'YLimMode','manual');
-            line(G.A6a,t, G.EEG(ii), 'Color','k', 'LineWidth', 1); % plot eeg
-            line(G.A6a,ones(1,2).*(G.timepointS-G.epochLen/2), [G.eegYlim(2),...
-                G.eegYlim(2)-.1*diff(G.eegYlim)],'Color','r', 'LineWidth', .5);
-            line(G.A6a,ones(1,2).*(G.timepointS+G.epochLen/2), [G.eegYlim(2),...
-                G.eegYlim(2)-.1*diff(G.eegYlim)],'Color','r', 'LineWidth', .5);
-            line(G.A6a,[G.timepointS-G.epochLen/2, G.timepointS+G.epochLen/2], [G.eegYlim(2) G.eegYlim(2)],...
-                'Color','r', 'LineWidth', .5);
-            set(G.A6a,'XTick',[],'YTick',[])
-            
-            % label x axis nicely
-            G.A6.XTick = tp-(G.show/2)*G.epochLen + G.epochLen*(0:G.show);
-            ticks = G.A6.XTick;
-            xlbl = cell(1, length(ticks));
-            for i = 1:length(ticks)
-                xlbl{i} = sec2hr(ticks(i));
+            % Compute dynamic y-axis limits based on current EEG window data (in volts)
+    
+            curEEG = G.EEG(ii);
+            y_min_EEG = min(curEEG);
+            y_max_EEG = max(curEEG);
+            yr_EEG = y_max_EEG - y_min_EEG;
+            padding_EEG = 0.02 * yr_EEG;
+            if yr_EEG < eps
+                y_min_dyn_EEG = y_min_EEG - 0.1;
+                y_max_dyn_EEG = y_max_EEG + 0.1;
+            else
+                y_min_dyn_EEG = y_min_EEG - padding_EEG;
+                y_max_dyn_EEG = y_max_EEG + padding_EEG;
             end
-            G.A6.XTickLabel = xlbl;
-            set(G.A6, 'YTick', []);
+            if y_min_dyn_EEG >= y_max_dyn_EEG
+                y_max_dyn_EEG = y_min_dyn_EEG + 0.1;
+            end
+            % Apply the dynamic y-axis limits (still in volts)
+            % Plot the EEG data (in volts)
+            line(G.A6, t, curEEG, 'Color','k', 'LineWidth', 1);
+            indicatorHeight_EEG = 0.1 * (globalRange_EEG);
             
+            % Draw vertical red lines at the left and right boundaries of the current epoch,
+            % with the line extending from the top (y_max_dyn_EEG) down by indicatorHeight_EEG.
+            line(G.A6, ones(1,2) * (G.timepointS - G.epochLen/2), [globalMax_EEG, globalMax_EEG - indicatorHeight_EEG], 'Color','r', 'LineWidth', 0.5);
+            line(G.A6, ones(1,2) * (G.timepointS + G.epochLen/2), [globalMax_EEG, globalMax_EEG - indicatorHeight_EEG], 'Color','r', 'LineWidth', 0.5);
+            % Draw a horizontal red line across the top of the current epoch:
+            line(G.A6, [G.timepointS - G.epochLen/2, G.timepointS + G.epochLen/2], [globalMax_EEG, globalMax_EEG], 'Color','r', 'LineWidth', 0.5);
+    
+    
+            desiredNumTicks = 4;
+            tickPrecision = 1;
+            y_min_dyn_EEG_mV = y_min_dyn_EEG * 1000;
+            y_max_dyn_EEG_mV = y_max_dyn_EEG * 1000;
+            customTicks_EEG_mV = linspace(y_min_dyn_EEG_mV, y_max_dyn_EEG_mV, desiredNumTicks);
+            customTicks_EEG_mV(1) = round(y_min_dyn_EEG_mV, tickPrecision);
+            customTicks_EEG_mV(end) = round(y_max_dyn_EEG_mV, tickPrecision);
+            EEG_amp_min_mV = customTicks_EEG_mV(1) * 1000;
+            EEG_amp_max_mV = customTicks_EEG_mV(end) * 1000;
+            EEG_amplitudeStr = sprintf('%d to %d mV', EEG_amp_min_mV, EEG_amp_max_mV);
+            % set(G.EEG_ampDisplay, 'String', EEG_amplitudeStr);
+    
+            if numel(unique(customTicks_EEG_mV)) < desiredNumTicks || any(diff(customTicks_EEG_mV) <= 0)
+                delta = (y_max_dyn_EEG_mV - y_min_dyn_EEG_mV) / (desiredNumTicks - 1);
+                customTicks_EEG_mV = y_min_dyn_EEG_mV : delta : y_max_dyn_EEG_mV;
+                if numel(customTicks_EEG_mV) ~= desiredNumTicks
+                    customTicks_EEG_mV = linspace(y_min_dyn_EEG_mV, y_max_dyn_EEG_mV, desiredNumTicks);
+                end
+            end
+    
+    
+            % Set the YTick values on G.A6.
+            % Since the data are in volts, convert the mV tick values back to volts:
+            % set(G.A6, 'YTick', customTicks_EEG_mV / 1000, 'YTickMode', 'manual');
+            % % For display, create formatted tick labels (in mV)
+            % formattedTicks_EEG = arrayfun(@(x) sprintf('%.1f', x), customTicks_EEG_mV, 'UniformOutput', false);
+            % set(G.A6, 'YTickLabel', formattedTicks_EEG, 'YTickMode', 'manual');
+            % % For verification, display the dynamic limits and tick values:
+            % currentYLim_EEG = get(G.A6, 'YLim');
+            % disp(['Dynamic EEG Y-axis limits: ', num2str(currentYLim_EEG)]);
+            % disp(['Underlying EEG YTick values: ', mat2str(customTicks_EEG_mV)]);
+            % disp(['Displayed EEG YTick labels: ', strjoin(formattedTicks_EEG, ', ')]);
+            % Apply the dynamic y-axis limits (data remain in volts)
+    
+              
+    
+    
+    
+                    %% Plot EEG signal - Previous Minute in g.A6a
+            % Determine if there is a previous minute available:
+            %% Plot EEG signal - Previous Minute in g.A6a (with dynamic YTick generation)
+            % --- Plot EEG Signal - Previous Minute in g.A6a (with dynamic YTick generation) ---
+            if G.timepointS > 60
+                tp_prev = G.timepointS - 60;  % center time for previous minute
+                n_prev = round((G.show * G.epochLen) / G.dt / 2);
+                i_center_prev = round(tp_prev / G.dt);
+                ii_prev = i_center_prev - n_prev : i_center_prev + n_prev;
+                ii_prev(ii_prev <= 0) = 1;
+                ii_prev(ii_prev >= G.eegLen) = G.eegLen;
+                t_prev = (tp_prev - n_prev * G.dt) : G.dt : (tp_prev + n_prev * G.dt);
+                
+                % EEG-previous minutes -1 minute
+                cla(G.A6a);
+                hold(G.A6a, 'on');
+                xlim(G.A6a, [t_prev(1)-G.dt, t_prev(end)]);
+                
+                % Compute dynamic y-axis limits for previous EEG (in volts)
+                curEEG_prev = G.EEG(ii_prev);
+                y_min_EEG_prev = min(curEEG_prev);
+                y_max_EEG_prev = max(curEEG_prev);
+                yr_EEG_prev = y_max_EEG_prev - y_min_EEG_prev;
+                padding_EEG_prev = 0.02 * yr_EEG_prev;
+                if yr_EEG_prev < eps
+                    y_min_dyn_EEG_prev = y_min_EEG_prev - 0.1;
+                    y_max_dyn_EEG_prev = y_max_EEG_prev + 0.1;
+                else
+                    y_min_dyn_EEG_prev = y_min_EEG_prev - padding_EEG_prev;
+                    y_max_dyn_EEG_prev = y_max_EEG_prev + padding_EEG_prev;
+                end
+                if y_min_dyn_EEG_prev >= y_max_dyn_EEG_prev
+                    y_max_dyn_EEG_prev = y_min_dyn_EEG_prev + 0.1;
+                end
+                ylim(G.A6a, [y_min_dyn_EEG_prev, y_max_dyn_EEG_prev]);
+                set(G.A6a, 'XLimMode','manual', 'YLimMode','manual');
+                
+                % Plot the previous EEG data (in volts)
+                line(G.A6a, t_prev, curEEG_prev, 'Color','k', 'LineWidth', 1);
+                
+                % --- In updatePlots, apply the stable EEG axis limits ---
+                set(G.A6a, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
+                
+                % --- Dynamically Set YTick Values for g.A6a ---
+                % desiredNumTicks = 4;
+                % tickPrecision = 1;
+                % y_min_dyn_EEG_prev_mV = y_min_dyn_EEG_prev * 1000;
+                % y_max_dyn_EEG_prev_mV = y_max_dyn_EEG_prev * 1000;
+                % customTicks_EEG_prev_mV = linspace(y_min_dyn_EEG_prev_mV, y_max_dyn_EEG_prev_mV, desiredNumTicks);
+                % customTicks_EEG_prev_mV(1) = round(y_min_dyn_EEG_prev_mV, tickPrecision);
+                % customTicks_EEG_prev_mV(end) = round(y_max_dyn_EEG_prev_mV, tickPrecision);
+                % EEGprev_amp_min_mV = customTicks_EEG_prev_mV(1) * 1000;
+                % EEGprev_amp_max_mV = customTicks_EEG_prev_mV(end) * 1000;
+                % EEGprev_amplitudeStr = sprintf('%d to %d mV', EEGprev_amp_min_mV, EEGprev_amp_max_mV);
+                % % set(G.EEGprev_ampDisplay, 'String', EEGprev_amplitudeStr);
+                % if numel(unique(customTicks_EEG_prev_mV)) < desiredNumTicks || any(diff(customTicks_EEG_prev_mV) <= 0)
+                %     delta = (y_max_dyn_EEG_prev_mV - y_min_dyn_EEG_prev_mV) / (desiredNumTicks - 1);
+                %     customTicks_EEG_prev_mV = y_min_dyn_EEG_prev_mV : delta : y_max_dyn_EEG_prev_mV;
+                %     if numel(customTicks_EEG_prev_mV) ~= desiredNumTicks
+                %         customTicks_EEG_prev_mV = linspace(y_min_dyn_EEG_prev_mV, y_max_dyn_EEG_prev_mV, desiredNumTicks);
+                %     end
+                % end
+                % customTicks_EEG_prev_mV = round(customTicks_EEG_prev_mV, tickPrecision);
+                % set(g.A6a, 'YTick', customTicks_EEG_prev_mV / 1000, 'YTickMode', 'manual');
+                % % For display, create formatted tick labels (in mV)
+                % formattedTicks_EEG_prev = arrayfun(@(x) sprintf('%.1f', x), customTicks_EEG_prev_mV, 'UniformOutput', false);
+                % set(g.A6a, 'YTickLabel', formattedTicks_EEG_prev, 'YTickMode', 'manual');
+                % set(g.A6a,'XTick',[])
+    
+                % Verification output for previous minute:
+                % currentYLim_EEG_prev = get(g.A6a, 'YLim');
+                % disp(['Dynamic EEG Y-axis limits for previous minute: ', num2str(currentYLim_EEG_prev)]);
+                % disp(['Underlying EEG YTick values for previous minute: ', mat2str(customTicks_EEG_prev_mV)]);
+                % disp(['Displayed EEG YTick labels for previous minute: ', strjoin(formattedTicks_EEG_prev, ', ')]);
+    
+    
+                % EMG-previous minutes -1 minute
+                cla(G.A7a);
+                hold(G.A7a, 'on');
+                xlim(G.A7a, [t_prev(1)-G.dt, t_prev(end)]);
+                
+                % Compute dynamic y-axis limits for previous EEG (in volts)
+                curEMG_prev = G.EMG(ii_prev);
+                y_min_EMG_prev = min(curEMG_prev);
+                y_max_EMG_prev = max(curEMG_prev);
+                yr_EMG_prev = y_max_EMG_prev - y_min_EMG_prev;
+                padding_EMG_prev = 0.02 * yr_EMG_prev;
+                if yr_EMG_prev < eps
+                    y_min_dyn_EMG_prev = y_min_EMG_prev - 0.1;
+                    y_max_dyn_EMG_prev = y_max_EMG_prev + 0.1;
+                else
+                    y_min_dyn_EMG_prev = y_min_EMG_prev - padding_EMG_prev;
+                    y_max_dyn_EMG_prev = y_max_EMG_prev + padding_EMG_prev;
+                end
+                if y_min_dyn_EMG_prev >= y_max_dyn_EMG_prev
+                    y_max_dyn_EMG_prev = y_min_dyn_EMG_prev + 0.1;
+                end
+                ylim(G.A7a, [y_min_dyn_EMG_prev, y_max_dyn_EMG_prev]);
+                set(G.A7a, 'XLimMode','manual', 'YLimMode','manual');
+                
+                % Plot the previous EEG data (in volts)
+                line(G.A7a, t_prev, curEMG_prev, 'Color','k', 'LineWidth', 1);
+                set(G.A7a, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
+    
+                
+                % --- Dynamically Set YTick Values for g.A6a ---
+                % desiredNumTicks = 4;
+                % tickPrecision = 1;
+                % y_min_dyn_EMG_prev_mV = y_min_dyn_EMG_prev * 1000;
+                % y_max_dyn_EMG_prev_mV = y_max_dyn_EMG_prev * 1000;
+                % customTicks_EMG_prev_mV = linspace(y_min_dyn_EMG_prev_mV, y_max_dyn_EMG_prev_mV, desiredNumTicks);
+                % customTicks_EMG_prev_mV(1) = round(y_min_dyn_EMG_prev_mV, tickPrecision);
+                % customTicks_EMG_prev_mV(end) = round(y_max_dyn_EMG_prev_mV, tickPrecision);
+                % EMGprev_amp_min_mV = customTicks_EMG_prev_mV(1) * 1000;
+                % EMGprev_amp_max_mV = customTicks_EMG_prev_mV(end) * 1000;
+                % EMGprev_amplitudeStr = sprintf('%d to %d mV', EMGprev_amp_min_mV, EMGprev_amp_max_mV);
+                % % set(G.EMGprev_ampDisplay, 'String', EMGprev_amplitudeStr);
+                % if numel(unique(customTicks_EMG_prev_mV)) < desiredNumTicks || any(diff(customTicks_EMG_prev_mV) <= 0)
+                %     delta = (y_max_dyn_EMG_prev_mV - y_min_dyn_EMG_prev_mV) / (desiredNumTicks - 1);
+                %     customTicks_EMG_prev_mV = y_min_dyn_EMG_prev_mV : delta : y_max_dyn_EMG_prev_mV;
+                %     if numel(customTicks_EMG_prev_mV) ~= desiredNumTicks
+                %         customTicks_EMG_prev_mV = linspace(y_min_dyn_EMG_prev_mV, y_max_dyn_EMG_prev_mV, desiredNumTicks);
+                %     end
+                % end
+                % customTicks_EMG_prev_mV = round(customTicks_EMG_prev_mV, tickPrecision);
+                % set(G.A7a, 'YTick', customTicks_EMG_prev_mV / 1000, 'YTickMode', 'manual');
+                % % For display, create formatted tick labels (in mV)
+                % formattedTicks_EMG_prev = arrayfun(@(x) sprintf('%.1f', x), customTicks_EMG_prev_mV, 'UniformOutput', false);
+                % set(G.A7a, 'YTickLabel', formattedTicks_EMG_prev, 'YTickMode', 'manual');
+                % set(G.A7a,'XTick',[])
+                % 
+                % 
+                % 
+                % 
+                % % Verification output for previous minute:
+                % currentYLim_EMG_prev = get(G.A7a, 'YLim');
+                % disp(['Dynamic EEG Y-axis limits for previous minute: ', num2str(currentYLim_EMG_prev)]);
+                % disp(['Underlying EEG YTick values for previous minute: ', mat2str(customTicks_EMG_prev_mV)]);
+                % disp(['Displayed EEG YTick labels for previous minute: ', strjoin(formattedTicks_EMG_prev, ', ')]);
+                % 
+    
+            end
+            
+         
             % Plot Progress Button
             tp = G.timepointH; % time in seconds at the center of the screen
             if G.index < G.mid
@@ -682,9 +995,26 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
             defocus(src);
         end
     
-        function fct_zoominEEG(src,~)
+        function fct_zoominEEG(src, ~)
+            % Zoom in on the EEG axis (G.A7) by reducing its y-range by 5% on each side.
+            % Print statements are added to check the current and new YLim values.
             
-            G.eegYlim = [G.eegYlim(1)+.05*diff(G.eegYlim), G.eegYlim(2)-.05*diff(G.eegYlim)];
+            % Retrieve current y-axis limits (in volts)
+            current_EEGYLim = get(G.A7, 'YLim');
+            fprintf('Before zoom: current YLim = [%.6f, %.6f] V\n', current_EEGYLim(1), current_EEGYLim(2));
+            
+            % Calculate the current range
+            rangeY = diff(current_EEGYLim);
+            fprintf('Current range = %.6f V\n', rangeY);
+            
+            % Compute new y-axis limits by reducing the range by 5% on both sides
+            newYLim = [current_EEGYLim(1) + 0.15 * rangeY, current_EEGYLim(2) - 0.15 * rangeY];
+            fprintf('New YLim = [%.6f, %.6f] V\n', newYLim(1), newYLim(2));
+            
+            % Apply the new y-axis limits, and keep them fixed
+            set(G.A7, 'YLim', newYLim, 'YLimMode', 'manual');
+            
+            % Update the plots and remove focus from the button
             updatePlots;
             defocus(src);
         end
