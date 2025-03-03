@@ -159,10 +159,11 @@ set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
 ylabel(G.A3, 'Spec.');
 
 % Log Emg
-G.A4 = axes('Units', 'Normalized', 'Position', [0.05 0.82  0.87 0.07]);
-G.A4.Toolbar.Visible = 'off';
-ylabel(G.A4, 'Filtered EMG(20-50)');
-axis(G.A4, 'off');
+% G.A4 = axes('Units', 'Normalized', 'Position', [0.05 0.82  0.87 0.07]);
+% G.A4.Toolbar.Visible = 'off';
+% ylabel(G.A4, 'Filtered EMG(20-50)');
+% axis(G.A4, 'off');
+% set(G.A4, 'Visiblity', 'Off');
 
 % EEG signal - 1 Minute
 G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.71, 0.87 .09]);
@@ -225,7 +226,6 @@ set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 
 % Lower sleep stage labels
 G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
-ylabel(G.A9, 'State');
 
 % Lower Time point indicator
 % G.A2 = axes('Units', 'Normalized', 'Position', [0.05 0.015  0.87 0.02],'XTick',[],'YTick',[]);
@@ -250,10 +250,7 @@ stableMax_EEG = globalMax_EEG + padding_EEG;
 
 % --- In updatePlots, apply the stable EEG axis limits ---
 set(G.A6, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
-
-
 set(G.A6a, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
-
 set(G.A6b, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 
 
@@ -264,7 +261,7 @@ set(G.A6b, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 % text(G.A5,0.05,-1.6,'EEG2(mV)')
 % text(G.A5,0.05,-2.35,'EMG2(mV)')
 
-linkaxes([G.A3, G.A4, G.A8], 'x'); % upper panel x axes should stay linked
+linkaxes([G.A3, G.A8], 'x'); % upper panel x axes should stay linked
 
 % buttons
 G.helpbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[1 .8 .8],...
@@ -369,11 +366,11 @@ set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
 
 % plot processed EMG
-plot(G.A4,G.specTh,G.cappedEMG,'k')
-yr = max(G.cappedEMG) - min(G.cappedEMG); % adjust y limits
-set(G.A4,'XTick',[],'YTick',[],'box','off',...
-    'YLim',[min(G.cappedEMG) - .02*yr, max(G.cappedEMG) + .02*yr])
-ylabel(G.A4, 'EMG');
+% plot(G.A4,G.specTh,G.cappedEMG,'k')
+% yr = max(G.cappedEMG) - min(G.cappedEMG); % adjust y limits
+% set(G.A4,'XTick',[],'YTick',[],'box','off',...
+%     'YLim',[min(G.cappedEMG) - .02*yr, max(G.cappedEMG) + .02*yr])
+% ylabel(G.A4, 'EMG');
 
 
 % Upper sleep stages
@@ -385,12 +382,11 @@ updateState;
 updatePlots;
 
 message = 'Data loaded successfully';
-
 %% Functions used by buttons, keypresses, etc.
     function updatePlots(~, ~) % update plots when something changes
 
 
-         % plot sleep stage in the lower panel
+        % plot sleep stage in the lower panel
         n = (G.show-1)/2; % number of bins on either side of center to show
         tp = G.timepointS; % time in seconds at the center of the screen
         gi = G.index; % index of bin in the center of the screen
@@ -406,13 +402,11 @@ message = 'Data loaded successfully';
         seq=G.labels((1:G.show)+gi-G.mid+(G.mid-gi)*(gi<G.mid)-...
             (gi-G.nbins+(G.mid-1))*(gi>(G.nbins-(G.mid-1))));
         x = -n:n;
-
         cla(G.A9)
         hold(G.A9,'on')
         xlim(G.A9, [-n-0.5 n+0.5]);
         ylim(G.A9, [0.5 3.5]);
         set(G.A9, 'XLimMode','manual', 'YLimMode','manual');
-
         for i = 1:length(seq)
             if seq(i) == 4 || seq(i) == 5 || seq(i) == 6
                 % For stages 4, 5, and 6, draw a large block
@@ -429,6 +423,8 @@ message = 'Data loaded successfully';
 
         set(G.A9, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'Wake', 'NREM'});
 
+        line(G.A9, [-0.5, -0.5], [0.5,1], 'Color','r','LineWidth',1);
+        line(G.A9, [0.5, 0.5], [0.5,1], 'Color','r','LineWidth',1);
 
         % plot EEG and EMG
         n = round((G.show*G.epochLen)/G.dt/2); % number of samples on either side to show
@@ -490,52 +486,6 @@ message = 'Data loaded successfully';
         % Draw a horizontal line connecting the tops of the vertical markers at the bottom
         line(G.A7, [G.timepointS - G.epochLen/2, G.timepointS + G.epochLen/2], [currentYLim(1), currentYLim(1)], 'Color', 'r', 'LineWidth', 0.5);
 
-
-
-
-        %
-        % desiredNumTicks = 4;
-        % precision = 2;  % display precision: one decimal (in mV)
-        %
-        % % Convert dynamic limits from volts to mV:
-        % y_min_dyn_EMG_mV = y_min_dyn_EMG * 1000;
-        % y_max_dyn_EMG_mV = y_max_dyn_EMG * 1000;
-        %
-        % % Generate 4 evenly spaced tick marks between dynamic limits (in mV)
-        % customTicks_mV = linspace(y_min_dyn_EMG_mV, y_max_dyn_EMG_mV, desiredNumTicks);
-        %
-        % % Force endpoints to match the dynamic limits exactly (in mV)
-        % customTicks_mV(1) = round(y_min_dyn_EMG_mV, precision);
-        % customTicks_mV(end) = round(y_max_dyn_EMG_mV, precision);
-        %
-        % % Ensure final tick values are rounded to one decimal (in mV)
-        % customTicks_mV = round(customTicks_mV, precision);
-        % EMG_amp_min_mV = customTicks_mV(1) * 1000;
-        % EMG_amp_max_mV = customTicks_mV(end) * 1000;
-        % EMG_amplitudeStr = sprintf('%d to %d mV', EMG_amp_min_mV, EMG_amp_max_mV);
-        % % set(G.EMG_ampDisplay, 'String', EMG_amplitudeStr);
-        %
-        % % Check if the tick vector is strictly increasing and has no duplicates
-        % if numel(unique(customTicks_mV)) < desiredNumTicks || any(diff(customTicks_mV) <= 0)
-        %     % Fallback to predefined ticks that are valid after rounding
-        %     customTicks_mV = [-0.2, -0.1, 0.1, 0.2];
-        %     customTicks_mV = round(customTicks_mV, precision);
-        % end
-        %
-        % % Set the YTick values on G.A7 (convert mV back to volts)
-        % set(G.A7, 'YTick', customTicks_mV / 1000, 'YTickMode', 'manual');
-        %
-        % % Format tick labels for display (in mV)
-        % formattedTicks_EMG = arrayfun(@(x) sprintf('%.1f', x), customTicks_mV, 'UniformOutput', false);
-        % set(G.A7, 'YTickLabel', formattedTicks_EMG, 'YTickMode', 'manual');
-        %
-        % % Verification output:
-        % currentYLim_EMG = get(G.A7, 'YLim');
-        % disp(['Dynamic EMG Y-axis limits: ', num2str(currentYLim_EMG)]);
-        % disp(['Underlying EMG YTick values: ', mat2str(customTicks_mV)]);
-        % disp(['Displayed EMG YTick labels: ', strjoin(formattedTicks_EMG, ', ')]);
-
-
         cla(G.A6)
         hold(G.A6, 'on');
         xlim(G.A6,[t(1)-G.dt t(end)]);
@@ -572,6 +522,7 @@ message = 'Data loaded successfully';
 
         % Draw a horizontal line connecting the tops of the vertical markers at the bottom
         line(G.A6, [G.timepointS - G.epochLen/2, G.timepointS + G.epochLen/2], [currentYLim(2), currentYLim(2)], 'Color', 'r', 'LineWidth', 0.5);
+
         % label x axis nicely
         G.A6.XTick = tp-(G.show/2)*G.epochLen + G.epochLen*(0:G.show);
         ticks = G.A6.XTick;
@@ -928,7 +879,7 @@ message = 'Data loaded successfully';
 
         % unless we're at the beginning or end
         if G.index < G.mid  || G.nbins - G.index < (G.mid-1)
-            plot(G.A8,G.timepointH, 0.5, 'rd', 'LineWidth', 1.5,'MarkerFaceColor','b');
+            plot(G.A8,G.timepointH, 0.5, 'rd', 'LineWidth', 1.5,'MarkerFaceColor','r');
 
             if G.index <= (G.mid-1)
                 plot(G.A8,[0, G.epochLen/3600*G.show], [0.5,0.5], 'r','LineWidth',2);
@@ -1383,7 +1334,7 @@ end
                 args = struct(...
                     'WindowDuration', 4, ...        % in seconds
                     'WindowOverlap', 0.9, ...       % 90% overlap
-                    'FreqRange', [0 25], ...      % 0-25 Hz analysis range
+                    'FreqRange', [0 20], ...      % 0-25 Hz analysis range
                     'FreqStep', 1, ...           % 1 Hz resolution
                     'EpSampleFrequency', 512 ...    % Sampling frequency
                 );
@@ -1420,11 +1371,15 @@ end
     function [data, valid] = getCurrentEpochData(G)
         % Retrieve current data window
         valid = true;
+        n = round((G.show*G.epochLen)/G.dt/2);
+        i = round(G.timepointS / G.dt);
+        ii = i-n:i+n;
+        fprintf("N is: %s\n", num2str(n))
+        fprintf("TIMEPOINTS is: %s\n", num2str(G.timepointS))
+        fprintf("DT is: %s\n", num2str(G.dt))
+        fprintf("I is: %s\n", num2str(i))
+        fprintf("II is: %s\n", num2str(ii))
         try
-            n = round((G.show*G.epochLen)/G.dt/2);
-            i = round(G.timepointS / G.dt);
-            ii = i-n:i+n;
-
             if isfield(G, 'currentEpoch') && ~isempty(G.currentEpoch)
                 data = G.currentEpoch;
             else
@@ -1435,25 +1390,9 @@ end
             data = [];
             errordlg('Error accessing EEG data', 'Data Error');
         end
+
     end
 
-    % function [window, noverlap, nfft] = calculateWelchParams(data, args)
-    %     % Calculate window parameters with validation
-    %     fs = args.EpSampleFrequency;
-    %     min_window = 1/args.FreqStep;  % Minimum window for frequency resolution
-    %     fprintf("Minimum window for frequency resolution: %s", min_window)
-    %
-    %     window_samples = max([args.WindowDuration*fs, min_window]);
-    %     fprintf("Max: %s", num2str(window_samples))
-    %     window_samples = min(window_samples, length(data));
-    %     fprintf("Min: %s", num2str(window_samples))
-    %     window = hann(window_samples);
-    %     % fprintf("Windows: %s", window)
-    %
-    %     noverlap = round(window_samples * args.WindowOverlap);
-    %     nfft = max(2^nextpow2(window_samples), fs);  % Ensure minimum 1Hz resolution
-    % end
-    %
     function [window, noverlap, nfft] = calculateWelchParams(data, args)
         % Check if args is a valid struct
         if ~isstruct(args)
@@ -1547,6 +1486,7 @@ end
         y_range = max(psd_db) - min(psd_db);
         ylim(ax, [min(psd_db)-0.5*y_range max(psd_db)+0.5*y_range]);
     end
+
     function fct_zoomreset_t(src,~) % reset zoom level
 
         axes(G.A3);
