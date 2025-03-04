@@ -103,7 +103,7 @@ else % if no sleep stages provided, set to W*
 end
 
 % get spectrogram and time axes
-showFreqs = find(fAxis <= 25); % only show frequencies under 25 Hz
+showFreqs = find(fAxis <= 21); % only show frequencies under 25 Hz
 G.specTs = (1:G.nbins)*G.epochLen - G.epochLen/2; % spectrogram time axis, in seconds
 G.specTh = G.specTs./3600; % spectrogram time axis, in hours
 G.spectrogram = spec(:,showFreqs); % our EEG spectrogram
@@ -158,13 +158,6 @@ G.A3.Toolbar.Visible = 'off';
 set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
 ylabel(G.A3, 'Spec.');
 
-% Log Emg
-% G.A4 = axes('Units', 'Normalized', 'Position', [0.05 0.82  0.87 0.07]);
-% G.A4.Toolbar.Visible = 'off';
-% ylabel(G.A4, 'Filtered EMG(20-50)');
-% axis(G.A4, 'off');
-% set(G.A4, 'Visiblity', 'Off');
-
 % EEG signal - 1 Minute
 G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.71, 0.87 .09]);
 G.A6a.Toolbar.Visible = 'off';
@@ -216,27 +209,13 @@ set(G.A7, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 set(G.A7a, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 
-% Upper sleep stage labels
-% G.A1 = axes('Units', 'Normalized', 'Position', [0.05 0.035 0.87 0.08]);
-% G.A1.Toolbar.Visible = 'off';
-% Rotated label
-% ylabel(G.A1, 'State');
-% set(G.A1,'Box','off');
-
 
 % Lower sleep stage labels
 G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
 
-% Lower Time point indicator
-% G.A2 = axes('Units', 'Normalized', 'Position', [0.05 0.015  0.87 0.02],'XTick',[],'YTick',[]);
-% G.A2.Toolbar.Visible = 'off';
-% set(G.A2,'Box','off');
-
 % Upper time point indicator
 G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.893  0.87 0.015],'XTick',[],'YTick',[]);
 G.A8.Toolbar.Visible = 'off';
-
-
 
 % --- Compute Global EMG Limits (in volts) ---
 globalMin_EEG = min(G.EEG);
@@ -253,104 +232,62 @@ set(G.A6, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 set(G.A6a, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 set(G.A6b, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 
-
-% axis labels - old
-% text(G.A5,0.05,1.87,'State')
-% text(G.A5,0.05,-.1,'EEG1(mV)')
-% text(G.A5,0.05,-.9,'EMG1(mV)')
-% text(G.A5,0.05,-1.6,'EEG2(mV)')
-% text(G.A5,0.05,-2.35,'EMG2(mV)')
-
 linkaxes([G.A3, G.A8], 'x'); % upper panel x axes should stay linked
 
 % buttons
 G.helpbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[1 .8 .8],...
-    'Position',[.93 .94 .062 .055],'String','Help','Callback',@showHelp,'FontSize',9,...
+    'Position',[.93 .01 .062 .055],'String','Help','Callback',@showHelp,'FontSize',9,...
     'ToolTip','Show help menu (H)');
 G.savebtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[.8 1 .8],...
-    'Position',[.93 .885 .062 .045],'String','Save labels','Callback',@saveCallback,'FontSize',9,...
+    'Position',[.93 .07 .062 .045],'String','Save labels','Callback',@saveCallback,'FontSize',9,...
     'ToolTip','Save labels to file (F)');
 G.loadbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .845 .062 .03],'String','Load labels','Callback',@loadFile,'FontSize',9,...
+    'Position',[.93 .12 .062 .03],'String','Load labels','Callback',@loadFile,'FontSize',9,...
     'ToolTip','Load labels from file');
 G.brightbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .8 .062 .025],'String','Brighter','Callback',@brightSpect,...
+    'Position',[.93 .88 .062 .025],'String','Brighter','Callback',@brightSpect,...
     'FontSize',9,'ToolTip','Make EEG spectrogram brighter');
 G.dimbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .77 .062 .025],'String','Dimmer','Callback',@dimSpect,...
+    'Position',[.93 .85 .062 .025],'String','Dimmer','Callback',@dimSpect,...
     'FontSize',9,'ToolTip','Make EEG spectrogram dimmer');
 G.selectbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .705 .062 .04],'String','<html>Select<br>timepoint',...
+    'Position',[.93 .78 .062 .04],'String','<html>Select<br>timepoint',...
     'Callback',@fct_selectlocation,'FontSize',9,'ToolTip','Click a timepoint to show (A)');
 G.zoominbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .66 .062 .025],'String','Zoom IN','Callback',@fct_zoomin_t,...
+    'Position',[.93 .97 .062 .025],'String','Zoom IN','Callback',@fct_zoomin_t,...
     'FontSize',9,'ToolTip','Increase zoom level (+)');
 G.zoomoutbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .63 .062 .025],'String','Zoom OUT','Callback',@fct_zoomout_t,...
+    'Position',[.93 .94 .062 .025],'String','Zoom OUT','Callback',@fct_zoomout_t,...
     'FontSize',9,'ToolTip','Decrease zoom level (-)');
-% % Create a text box for EEG amplitude display, placed above or below the buttons:
-% G.EEGprev_ampDisplay = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-%     'Position', [.925 .4 .07 .035], 'String', '-- to --', ...
-%     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
-% % Create a text box for EEG amplitude display, placed above or below the buttons:
-% G.EEG_ampDisplay = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-%     'Position', [.925 .295 .07 .035], 'String', '-- to --', ...
-%     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
-% % Create a text box for EMG amplitude display, placed above or below the buttons:
-% G.EMG_ampDisplay = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-%     'Position', [.925 .18 .07 .035], 'String', '-- to --', ...
-%     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.zoomresetbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .595 .062 .025],'String','Reset zoom','Callback',@fct_zoomreset_t,...
+    'Position',[.93 .91 .062 .025],'String','Reset zoom','Callback',@fct_zoomreset_t,...
     'FontSize',9,'ToolTip','Reset zoom level (0)');
 G.gui_zoominEEG = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[0.93 0.515 0.03 0.03],'Callback', @fct_zoominEEG,'String','EEG+',...
+    'Position',[0.93 0.555 0.03 0.03],'Callback', @fct_zoominEEG,'String','EEG+',...
     'FontSize',9);
 G.gui_zoomoutEEG = uicontrol(WIN,'Style','pushbutton','Units','normalized',...
-    'Position',[0.93 0.48 0.03 0.03],'Callback', @fct_zoomoutEEG,'String','EEG-',...
+    'Position',[0.93 0.515 0.03 0.03],'Callback', @fct_zoomoutEEG,'String','EEG-',...
     'FontSize',9);
-% G.gui_shiftupEEG = uicontrol(WIN,'Style','pushbutton','Units','normalized',...
-%     'Position',[0.96 0.475 0.02 0.02],'Callback', @fct_shiftupEEG,'String','\/',...
-%     'FontSize',9);
-% G.gui_shiftdownEEG = uicontrol(WIN,'Style','pushbutton','Units','normalized',...
-%     'Position',[0.96 0.505 0.02 0.02],'Callback', @fct_shiftdownEEG,'String','/\',...
-%     'FontSize',9);
 G.gui_zoominEMG = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[0.96 0.515 0.03 0.03],'Callback', @fct_zoominEMG,'String','EMG+',...
+    'Position',[0.93 0.41 0.03 0.03],'Callback', @fct_zoominEMG,'String','EMG+',...
     'FontSize',9);
 G.gui_zoomoutEMG = uicontrol(WIN,'Style','pushbutton','Units','normalized',...
-    'Position',[0.96 0.48 0.03 0.03],'Callback', @fct_zoomoutEMG,'String','EMG-',...
+    'Position',[0.93 0.37 0.03 0.03],'Callback', @fct_zoomoutEMG,'String','EMG-',...
     'FontSize',9);
-G.showPDBtn = uicontrol(WIN, 'Style', 'pushbutton', 'Units', 'normalized', ...
-    'Position', [.93 .4 .062 .06], 'String', 'Power Density', ...
-    'Callback', @showPowerDensity, 'FontSize', 9, ...
-    'ToolTip', 'Show the Power Density of the current Epoch');
-% G.gui_shiftupEMG = uicontrol(WIN,'Style','pushbutton','Units','normalized',...
-%     'Position',[0.96 0.25 0.02 0.02],'Callback', @fct_shiftupEMG,'String','\/',...
-%     'FontSize',9);
-% G.gui_shiftdownEMG = uicontrol(WIN,'Style','pushbutton','Units','normalized',...
-%     'Position',[0.96 0.28 0.02 0.02],'Callback', @fct_shiftdownEMG,'String','/\',...
-%     'FontSize',9);
 G.showMenu = uicontrol(WIN,'Style','popupmenu','Units','normalized',...
-    'Position',[0.93 0.565 0.062 0.02],'Callback', @fct_showmenu,...
+    'Position',[0.93 0.75 0.062 0.02],'Callback', @fct_showmenu,...
     'String',{'1 epoch','3 epochs','5 epochs','7 epochs','9 epochs','15 epochs'},...
     'Value',6);
-% G.rangebtn = uicontrol(WIN,'Style','pushbutton','Units','normalized','BackgroundColor',[.92 .92 .92],...
-%     'Position',[.93 .16 .062 .025],'String','set range','Callback',@setRange,...
-%     'FontSize',9,'ToolTip',sprintf(['Set state for range of timepoints (*)',...
-%     '\nDraw an ROI on the upper sleep stage panel,\nand double-click it']));
-% G.nrembtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-%     'Position',[.93 .13 .062 .025],'String','NREM','Callback',@(src,evnt)setState(src,evnt,3),...
-%     'FontSize',9,'ToolTip','Set state to NREM (S)','BackgroundColor',[1 .96 .82]); %.8 .8 .8
-% G.wakebtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-%     'Position',[.93 .1 .062 .025],'String','Wake','Callback',@(src,evnt)setState(src,evnt,2),...
-%     'FontSize',9,'ToolTip','Set state to wake (W)','BackgroundColor',[.86 .88 1]); % .93 .5 .93
-% G.rembtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-%     'Position',[.93 .07 .062 .025],'String','REM','Callback',@(src,evnt)setState(src,evnt,1),...
-%     'FontSize',9,'ToolTip','Set state to REM (R)','BackgroundColor',[.84 .92 .73]); % .5 1 1
-% G.autobox = uicontrol(WIN,'Style','checkbox', 'Units','normalized',...
-%     'Position',[.93 .005 .062 .06],'String','<html>Auto-<br>scroll','Callback',@scrollCallback,...
-%     'FontSize',9,'ToolTip','Advance to next time step after assigning label (insert)');
+
+G.meanDelta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    'Position', [.925 .22 .07 .035], 'String', '', ...
+    'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+G.meanTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    'Position', [.925 .20 .07 .035], 'String', '', ...
+    'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+G.thetaRatio = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    'Position', [.925 .16 .07 .035], 'String', '', ...
+    'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 % keep track of the current timepoint
 G.index = 1; % index of current time point
 G.timepointS = G.specTs(G.index); % current time point, in seconds
@@ -365,19 +302,12 @@ G.lims = xlim(G.A3); % store maximum x limits for the upper panel plots
 set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
 
-% plot processed EMG
-% plot(G.A4,G.specTh,G.cappedEMG,'k')
-% yr = max(G.cappedEMG) - min(G.cappedEMG); % adjust y limits
-% set(G.A4,'XTick',[],'YTick',[],'box','off',...
-%     'YLim',[min(G.cappedEMG) - .02*yr, max(G.cappedEMG) + .02*yr])
-% ylabel(G.A4, 'EMG');
+G.A10 = axes('Units', 'Normalized', 'Position', [0.05 0.82  0.87 0.07]);
+G.A10.Toolbar.Visible = 'off';
 
-
-% Upper sleep stages
-% box(G.A1, 'off');
-% xlim(G.A1,[G.specTh(1)-G.epochLen/3600, G.specTh(end)-G.epochLen/3600]);
 updateState;
-
+[totalfreq, totalpsdVals] = computeBinPSD(G.EEG, 512, 2, 0.9);
+fprintf("Total PSD Vals: %s \n %s",min(totalpsdVals), max(totalpsdVals))
 % Plot everything else
 updatePlots;
 
@@ -458,23 +388,8 @@ message = 'Data loaded successfully';
             y_max_dyn_EMG = y_min_dyn_EMG + 0.1;
         end
 
-        % Apply the dynamic y-axis limits (data remain in volts)
-        % ylim(G.A7, [y_min_dyn_EMG, y_max_dyn_EMG]);
-        % set(G.A7, 'XLimMode','manual', 'YLimMode','manual');
-
         line(G.A7, t, curEMG, 'Color', 'k', 'LineWidth', 1);
-        % Plot red indicator lines for current epoch boundaries:
-        % indicatorHeight_EMG = 0.1 * (globalRange_EMG);  % Height based on current axis range
-        %
-        % % Vertical line at left epoch boundary (starts at bottom, points upward)
-        % line(G.A7, ones(1,2)*(G.timepointS - G.epochLen/2),[y_min_dyn_EMG, y_min_dyn_EMG + indicatorHeight_EMG],'Color','r', 'LineWidth', 0.5);
-        %
-        % % Vertical line at right epoch boundary (starts at bottom, points upward)
-        % line(G.A7, ones(1,2)*(G.timepointS + G.epochLen/2),[y_min_dyn_EMG, y_min_dyn_EMG + indicatorHeight_EMG],'Color','r', 'LineWidth', 0.5);
-        %
-        %
-        % % Horizontal line connecting the tops of the vertical markers
-        % line(G.A7, [G.timepointS - G.epochLen/2, G.timepointS + G.epochLen/2], [y_min_dyn_EMG, y_min_dyn_EMG], 'Color','r', 'LineWidth', 0.5);
+
         currentYLim = get(G.A7, 'YLim');  % currentYLim = [bottom, top]
         % Define an indicator height as a fraction of the current range
         indicatorHeight_EMG = 0.125 * diff(currentYLim);
@@ -562,22 +477,7 @@ message = 'Data loaded successfully';
         end
 
 
-        % Set the YTick values on G.A6.
-        % Since the data are in volts, convert the mV tick values back to volts:
-        % set(G.A6, 'YTick', customTicks_EEG_mV / 1000, 'YTickMode', 'manual');
-        % % For display, create formatted tick labels (in mV)
-        % formattedTicks_EEG = arrayfun(@(x) sprintf('%.1f', x), customTicks_EEG_mV, 'UniformOutput', false);
-        % set(G.A6, 'YTickLabel', formattedTicks_EEG, 'YTickMode', 'manual');
-        % % For verification, display the dynamic limits and tick values:
-        % currentYLim_EEG = get(G.A6, 'YLim');
-        % disp(['Dynamic EEG Y-axis limits: ', num2str(currentYLim_EEG)]);
-        % disp(['Underlying EEG YTick values: ', mat2str(customTicks_EEG_mV)]);
-        % disp(['Displayed EEG YTick labels: ', strjoin(formattedTicks_EEG, ', ')]);
-        % Apply the dynamic y-axis limits (data remain in volts)
-
-
-
-
+        showAllEpochsPSD(G)
 
                 %% Plot EEG signal - Previous Minute in zoomineeg
         % Determine if there is a previous minute available:
@@ -613,48 +513,9 @@ message = 'Data loaded successfully';
             if y_min_dyn_EEG_prev >= y_max_dyn_EEG_prev
                 y_max_dyn_EEG_prev = y_min_dyn_EEG_prev + 0.1;
             end
-            % ylim(G.A6a, [y_min_dyn_EEG_prev, y_max_dyn_EEG_prev]);
-            % set(G.A6a, 'XLimMode','manual', 'YLimMode','manual');
-
 
             % Plot the previous EEG data (in volts)
             line(G.A6a, t_prev, curEEG_prev, 'Color','k', 'LineWidth', 1);
-
-            % --- In updatePlots, apply the stable EEG axis limits ---
-            % set(G.A6a, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
-
-            % --- Dynamically Set YTick Values for g.A6a ---
-            % desiredNumTicks = 4;
-            % tickPrecision = 1;
-            % y_min_dyn_EEG_prev_mV = y_min_dyn_EEG_prev * 1000;
-            % y_max_dyn_EEG_prev_mV = y_max_dyn_EEG_prev * 1000;
-            % customTicks_EEG_prev_mV = linspace(y_min_dyn_EEG_prev_mV, y_max_dyn_EEG_prev_mV, desiredNumTicks);
-            % customTicks_EEG_prev_mV(1) = round(y_min_dyn_EEG_prev_mV, tickPrecision);
-            % customTicks_EEG_prev_mV(end) = round(y_max_dyn_EEG_prev_mV, tickPrecision);
-            % EEGprev_amp_min_mV = customTicks_EEG_prev_mV(1) * 1000;
-            % EEGprev_amp_max_mV = customTicks_EEG_prev_mV(end) * 1000;
-            % EEGprev_amplitudeStr = sprintf('%d to %d mV', EEGprev_amp_min_mV, EEGprev_amp_max_mV);
-            % % set(G.EEGprev_ampDisplay, 'String', EEGprev_amplitudeStr);
-            % if numel(unique(customTicks_EEG_prev_mV)) < desiredNumTicks || any(diff(customTicks_EEG_prev_mV) <= 0)
-            %     delta = (y_max_dyn_EEG_prev_mV - y_min_dyn_EEG_prev_mV) / (desiredNumTicks - 1);
-            %     customTicks_EEG_prev_mV = y_min_dyn_EEG_prev_mV : delta : y_max_dyn_EEG_prev_mV;
-            %     if numel(customTicks_EEG_prev_mV) ~= desiredNumTicks
-            %         customTicks_EEG_prev_mV = linspace(y_min_dyn_EEG_prev_mV, y_max_dyn_EEG_prev_mV, desiredNumTicks);
-            %     end
-            % end
-            % customTicks_EEG_prev_mV = round(customTicks_EEG_prG2ev_mV, tickPrecision);
-            % set(g.A6a, 'YTick', customTicks_EEG_prev_mV / 1000, 'YTickMode', 'manual');
-            % % For display, create formatted tick labels (in mV)
-            % formattedTicks_EEG_prev = arrayfun(@(x) sprintf('%.1f', x), customTicks_EEG_prev_mV, 'UniformOutput', false);
-            % set(g.A6a, 'YTickLabel', formattedTicks_EEG_prev, 'YTickMode', 'manual');
-            % set(g.A6a,'XTick',[])
-
-            % Verification output for previous minute:
-            % currentYLim_EEG_prev = get(g.A6a, 'YLim');
-            % disp(['Dynamic EEG Y-axis limits for previous minute: ', num2str(currentYLim_EEG_prev)]);
-            % disp(['Underlying EEG YTick values for previous minute: ', mat2str(customTicks_EEG_prev_mV)]);
-            % disp(['Displayed EEG YTick labels for previous minute: ', strjoin(formattedTicks_EEG_prev, ', ')]);
-
 
             % EMG-previous minutes -1 minute
             cla(G.A7a);
@@ -682,44 +543,7 @@ message = 'Data loaded successfully';
 
             % Plot the previous EEG data (in volts)
             line(G.A7a, t_prev, curEMG_prev, 'Color','k', 'LineWidth', 1);
-            % set(G.A7a, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 
-
-            % --- Dynamically Set YTick Values for g.A6a ---
-            % desiredNumTicks = 4;
-            % tickPrecision = 1;
-            % y_min_dyn_EMG_prev_mV = y_min_dyn_EMG_prev * 1000;
-            % y_max_dyn_EMG_prev_mV = y_max_dyn_EMG_prev * 1000;
-            % customTicks_EMG_prev_mV = linspace(y_min_dyn_EMG_prev_mV, y_max_dyn_EMG_prev_mV, desiredNumTicks);
-            % customTicks_EMG_prev_mV(1) = round(y_min_dyn_EMG_prev_mV, tickPrecision);
-            % customTicks_EMG_prev_mV(end) = round(y_max_dyn_EMG_prev_mV, tickPrecision);
-            % EMGprev_amp_min_mV = customTicks_EMG_prev_mV(1) * 1000;
-            % EMGprev_amp_max_mV = customTicks_EMG_prev_mV(end) * 1000;
-            % EMGprev_amplitudeStr = sprintf('%d to %d mV', EMGprev_amp_min_mV, EMGprev_amp_max_mV);
-            % % set(G.EMGprev_ampDisplay, 'String', EMGprev_amplitudeStr);
-            % if numel(unique(customTicks_EMG_prev_mV)) < desiredNumTicks || any(diff(customTicks_EMG_prev_mV) <= 0)
-            %     delta = (y_max_dyn_EMG_prev_mV - y_min_dyn_EMG_prev_mV) / (desiredNumTicks - 1);
-            %     customTicks_EMG_prev_mV = y_min_dyn_EMG_prev_mV : delta : y_max_dyn_EMG_prev_mV;
-            %     if numel(customTicks_EMG_prev_mV) ~= desiredNumTicks
-            %         customTicks_EMG_prev_mV = linspace(y_min_dyn_EMG_prev_mV, y_max_dyn_EMG_prev_mV, desiredNumTicks);
-            %     end
-            % end
-            % customTicks_EMG_prev_mV = round(customTicks_EMG_prev_mV, tickPrecision);
-            % set(G.A7a, 'YTick', customTicks_EMG_prev_mV / 1000, 'YTickMode', 'manual');
-            % % For display, create formatted tick labels (in mV)
-            % formattedTicks_EMG_prev = arrayfun(@(x) sprintf('%.1f', x), customTicks_EMG_prev_mV, 'UniformOutput', false);
-            % set(G.A7a, 'YTickLabel', formattedTicks_EMG_prev, 'YTickMode', 'manual');
-            % set(G.A7a,'XTick',[])
-            %
-            %
-            %
-            %
-            % % Verification output for previous minute:
-            % currentYLim_EMG_prev = get(G.A7a, 'YLim');
-            % disp(['Dynamic EEG Y-axis limits for previous minute: ', num2str(currentYLim_EMG_prev)]);
-            % disp(['Underlying EEG YTick values for previous minute: ', mat2str(customTicks_EMG_prev_mV)]);
-            % disp(['Displayed EEG YTick labels for previous minute: ', strjoin(formattedTicks_EMG_prev, ', ')]);
-            %
 
         end
 
@@ -765,37 +589,6 @@ message = 'Data loaded successfully';
             line(G.A6b, t_future, curEEG_future, 'Color','k', 'LineWidth', 1);
 
 
-            % --- Dynamically Set YTick Values for G.A6b ---
-            % desiredNumTicks = 4;
-            % tickPrecision = 1;  % display precision: one decimal (in mV)
-            %
-            % % Convert dynamic limits from volts to mV:
-            % y_min_dyn_EEG_future_mV = y_min_dyn_EEG_future * 1000;
-            % y_max_dyn_EEG_future_mV = y_max_dyn_EEG_future * 1000;
-            %
-            % % Generate 4 evenly spaced tick marks between these limits (in mV)
-            % customTicks_EEG_future_mV = linspace(y_min_dyn_EEG_future_mV, y_max_dyn_EEG_future_mV, desiredNumTicks);
-            % customTicks_EEG_future_mV(1) = round(y_min_dyn_EEG_future_mV, tickPrecision);
-            % customTicks_EEG_future_mV(end) = round(y_max_dyn_EEG_future_mV, tickPrecision);
-            %
-            % % Check if the tick vector is strictly increasing; if not, use fallback:
-            % if numel(unique(customTicks_EEG_future_mV)) < desiredNumTicks || any(diff(customTicks_EEG_future_mV) <= 0)
-            %     delta = (y_max_dyn_EEG_future_mV - y_min_dyn_EEG_future_mV) / (desiredNumTicks - 1);
-            %     customTicks_EEG_future_mV = y_min_dyn_EEG_future_mV : delta : y_max_dyn_EEG_future_mV;
-            %     if numel(customTicks_EEG_future_mV) ~= desiredNumTicks
-            %         customTicks_EEG_future_mV = linspace(y_min_dyn_EEG_future_mV, y_max_dyn_EEG_future_mV, desiredNumTicks);
-            %     end
-            % end
-            % customTicks_EEG_future_mV = round(customTicks_EEG_future_mV, tickPrecision);
-            %
-            % % Set YTick values on G.A6b (convert mV back to volts)
-            % set(G.A6b, 'YTick', customTicks_EEG_future_mV / 1000, 'YTickMode', 'manual');
-            % % Format tick labels for display (in mV)
-            % formattedTicks_EEG_future = arrayfun(@(x) sprintf('%.1f', x), customTicks_EEG_future_mV, 'UniformOutput', false);
-            % set(G.A6b, 'YTickLabel', formattedTicks_EEG_future, 'YTickMode', 'manual');
-
-            % (Optional) Remove x and y ticks for a clean look
-            % Clear and prepare the future EEG axis (G.A6b)
             cla(G.A7b);
             hold(G.A7b, 'on');
             xlim(G.A7b, [t_future(1)-G.dt, t_future(end)]);
@@ -838,37 +631,6 @@ message = 'Data loaded successfully';
         if G.nbins - G.index < (G.mid-1)
             tp = gi*G.epochLen/3600-G.epochLen/3600/2;
         end
-        % li = get(G.A2,'xlim');
-        % cla(G.A2);
-        % hold(G.A2,'on')
-        % xlim(G.A2,li);
-        % set(G.A2,'YTick',[],'XTick',[],'XLimMode','manual', 'YLimMode','manual');
-        %
-        % % unless we're at the beginning or end
-        % if G.index < G.mid  || G.nbins - G.index < (G.mid-1)
-        %     plot(G.A2,G.timepointH, 0.5, 'rd', 'LineWidth', 3,'MarkerFaceColor','r');
-        %
-        %     if G.index <= (G.mid-1)
-        %         plot(G.A2,[0, G.epochLen/3600*G.show], [0.5,0.5], 'r','LineWidth',2);
-        %     else
-        %         plot(G.A2,[G.specTh(end-G.show)+G.epochLen/3600/2, G.specTh(end)+G.epochLen/3600/2],...
-        %             [0.5,0.5], 'r','LineWidth',2);
-        %
-        %     end
-        % else
-        %     plot(G.A2,G.timepointH, 0.5, 'rd', 'LineWidth', 3,'MarkerFaceColor','r');
-        %     line(G.A2,[tp-G.epochLen/3600*(G.show/2),tp+G.epochLen/3600*(G.show/2)], [0.5,0.5],...
-        %         'Color','r','LineWidth',2);
-        % end
-
-
-        % if tp<(li(1)+.35*diff(li)) && li(1) > G.lims(1) % we are far to the left
-        %     xlim(G.A2,li - min([li(1)-G.lims(1), li(1)+.35*diff(li)-tp]))
-        % else
-        %     if tp>(li(1)+.65*diff(li)) && li(2) < G.lims(2) % far to the right
-        %         xlim(G.A2,li + min([G.lims(2)-li(2), tp-li(1)-.65*diff(li)]))
-        %     end
-        % end
 
 
         li = get(G.A8,'xlim');
@@ -906,29 +668,207 @@ message = 'Data loaded successfully';
 
     function updateState() % update the sleep stage image
 
-        % li=xlim(G.A1);
-        % cla(G.A1);
-        % hold(G.A1, 'on');
-        % % box(lowerA9,'off');
-        % ylim(G.A1,[.5 3.5]);
-        % xlim(G.A1,li) % make sure x limits are correct
-        % set(G.A1,'XLimMode','manual','YLimMode','manual');
-        % imagesc(G.A1, G.specTh, [1 2 3 4 5 6], makeSleepStageImage(G.labels), [0 6]);
-        % colormap(G.A1,G.colors);
-        % set(G.A1, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'Wake', 'NREM'});
+
     end
 
-    function [im] = makeSleepStageImage(state) % create the image to show
-        % in the top sleep stage panel
-        im = zeros(3,length(state));
-        for i = 1:3
-            im(i,:) = (state==i).*i;
-            im(i,state==4) = 4;
-            im(i,state==5) = 5;
-            im(i,state==6) = 6;
+    function printBandMeans(freq, psd_dB)
+        % Define frequency bands and a corresponding label (for printing)
+        bands = {
+            [0, 4],      'Red';    % 0-4 Hz => red
+            [5, 9],      'Blue';   % 5-9 Hz => blue
+            [10, 15],    'Green';  % 10-15 Hz => green
+            [16, 20],    'Gray'    % 16-20 Hz => gray
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (freq >= range(1)) & (freq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(psd_dB(idx));
+            else
+                bandMeans(b) = NaN;
+            end
         end
-    end
 
+        % Print the mean power for each band
+        for b = 1:nBands
+            fprintf('Mean power in %d-%d Hz (%s): %.10f dB\n', ...
+                bands{b, 1}(1), bands{b, 1}(2), bands{b, 2}, bandMeans(b));
+        end
+
+        % Calculate the mean power in the 0-4 Hz band
+        meanPower_0_4Hz = mean(psd_dB(freq >= 0 & freq <= 4));
+        meanPower_5_9Hz = mean(psd_dB(freq >=5 & freq <=9));
+        tRatio = ((meanPower_5_9Hz-meanPower_0_4Hz)/meanPower_0_4Hz);
+
+        % Update the text box
+        set(G.meanDelta, 'String', sprintf('Delta: %.10f ', meanPower_0_4Hz));
+        set(G.meanTheta, 'String', sprintf('Theta: %.10f ', meanPower_5_9Hz));
+        set(G.thetaRatio, 'String', sprintf('Theta Ratio: %.3f ', tRatio));
+
+
+
+        % Print the mean power in the 0-4 Hz band
+        fprintf('Mean power in 0-4 Hz: %.10f dB\n', meanPower_0_4Hz);
+    end
+    function showAllEpochsPSD(G)
+        % 1) Clear G.A10 and hold on
+        cla(G.A10);
+        hold(G.A10, 'on');
+
+        % Welch analysis parameters
+        windowSeconds  = 2;      % sub-window length for Welch
+        overlapPercent = 0.9;    % 90% overlap
+        freqRange      = [0 20]; % show 0..20 Hz
+        fs             = 1 / G.dt;  % sampling rate
+
+        % Bins to display
+        n         = (G.show -1)/2;
+        centerBin = G.index;
+        binStart  = centerBin - n;
+        binEnd    = centerBin + n;
+
+        % We'll track min/max across all bins to standardize the y-scale
+
+        for binIdx = binStart : binEnd
+            % 2) Extract data for this bin
+            data = getBinData(G, binIdx);
+
+            if isempty(data)
+                continue;  % skip invalid or out-of-bounds bin
+            end
+
+            % 3) Compute PSD (freq, psdVals) via Welch
+            [freq, psdVals] = computeBinPSD(data, fs, windowSeconds, overlapPercent);
+
+            localMax = max(psdVals);
+            localMin = min(psdVals);
+
+
+            % 4) Filter freq range
+            mask = (freq >= freqRange(1)) & (freq <= freqRange(2));
+            freq    = freq(mask);
+            psdVals = psdVals(mask);
+
+            % 5) Convert to dB if desired
+            % psd_dB = 10 * log10(psdVals);
+            psd_dB = psdVals;
+            printBandMeans(freq, psd_dB);
+            psd_dB = psdVals;
+
+            % 6) Color-code each frequency point in freq by 4 bands:
+            %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+            cMap = zeros(length(freq), 3);  % each row = RGB
+            for i = 1:length(freq)
+                f = freq(i);
+                if f >= 0  && f <= 4
+                    cMap(i,:) = [1, 0, 0];      % red
+                elseif f > 4  && f <= 9
+                    cMap(i,:) = [0, 0, 1];      % blue
+                elseif f > 9 && f <= 15
+                    cMap(i,:) = [0, 1, 0];      % green
+                else
+                    cMap(i,:) = [0.5, 0.5, 0.5];% gray
+                end
+            end
+
+            % Define frequency bands and corresponding colors
+            bands = {
+                [0, 4],      [1 0 0];      % red for 0–4 Hz
+                [5, 9],      [0 0 1];      % blue for 5–9 Hz
+                [10, 15],    [0 1 0];      % green for 10–15 Hz
+                [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+            };
+
+            nBands = size(bands, 1);
+            bandMeans = zeros(1, nBands);
+
+            % Calculate the mean PSD (in dB) for each frequency band
+            for b = 1:nBands
+                range = bands{b, 1};
+                idx = (freq >= range(1)) & (freq <= range(2));
+                if any(idx)
+                    bandMeans(b) = mean(psd_dB(idx));
+                else
+                    bandMeans(b) = NaN;  % or 0 if you prefer
+                end
+            end
+
+            % 7) Create a bar chart for this bin's PSD
+            %    "FaceColor=flat" means we can assign colors via CData.
+            %    "FaceAlpha=0.3" for partial transparency.
+            b = bar(G.A10, freq, psd_dB, 1, ...
+                    'EdgeColor','none', ...
+                    'FaceColor','flat', ...
+                    'FaceAlpha',0.3, ...
+                    'DisplayName', sprintf('Epoch# %d', binIdx));
+
+            % Assign the color map
+            b.CData = cMap;
+
+        end
+
+        % 9) Axis labeling
+        xlabel(G.A10, 'Frequency (Hz)');
+        ylabel(G.A10, 'Power');
+        xlim(G.A10, freqRange);
+        grid(G.A10,'on');
+        legend(G.A10,'show');  % show each bin in the legend
+
+        % 10) Standardize y-lim across all bins
+            yRange = localMax - localMin;
+            ymin   = localMin - 0.1*yRange;
+            ymax   = max(totalpsdVals);
+            ylim(G.A10, [ymin, ymax]);
+
+
+        hold(G.A10, 'off');
+    end
+    function data = getBinData(G, binIdx)
+        data = [];
+        fs = 1 / G.dt;  % sampling freq
+        epochSamples = round(G.epochLen * fs);
+
+        % If binIdx < 1 or binIdx > G.nbins, might be out of range
+        if binIdx < 1 || binIdx > G.nbins
+            return; % just return empty
+        end
+
+        % Start sample
+        startSample = (binIdx - 1)*epochSamples + 1;
+        % End sample
+        endSample   = binIdx*epochSamples;
+
+        % clamp
+        if startSample < 1
+            startSample = 1;
+        end
+        if endSample > length(G.EEG)
+            endSample = length(G.EEG);
+        end
+
+        data = G.EEG(startSample:endSample);
+    end
+    function [freq, psdVals] = computeBinPSD(data, fs, windowSec, overlapPercent)
+        N = length(data);
+
+        % sub-window length in samples:
+        wlen = round(windowSec * fs);
+        if wlen > N
+            wlen = N;
+        end
+
+        noverlap = round(wlen * overlapPercent);
+        if noverlap >= wlen
+            noverlap = wlen-1;
+        end
+
+        [psdVals, freq] = pwelch(data, hann(wlen), noverlap, wlen, fs);
+    end
 % Process keypresses
     function keypress(~, evt)
 
@@ -1320,77 +1260,44 @@ end
         defocus(src);
     end
 
-    function showPowerDensity(~, ~)
-            % Check for available data
-            if ~isfield(G, 'EEG') || isempty(G.EEG)
-                errordlg('No EEG data loaded', 'Error');
-                return;
-            end
-
-            % Get analysis parameters from parent scope
-            persistent args;
-            if isempty(args)
-                % Default analysis parameters
-                args = struct(...
-                    'WindowDuration', 4, ...        % in seconds
-                    'WindowOverlap', 0.9, ...       % 90% overlap
-                    'FreqRange', [0 20], ...      % 0-25 Hz analysis range
-                    'FreqStep', 1, ...           % 1 Hz resolution
-                    'EpSampleFrequency', 512 ...    % Sampling frequency
-                );
-            end
-
-            % Get current data window
-            [data, valid] = getCurrentEpochData(G);
-            % fprintf("current data: %s", data)
-            fprintf("Length of data %s", num2str(length(data)))
-            if ~valid, return; end
-
-            % Calculate Welch parameters
-            [window, noverlap, nfft] = calculateWelchParams(data, args);
-
-            % Compute PSD with error handling
-            try
-                [psd, freq] = pwelch(data, window, noverlap, nfft, args.EpSampleFrequency);
-            catch ME
-                handlePSDError(ME);
-                return;
-            end
-
-            % Filter by frequency range
-            freq_mask = (freq >= args.FreqRange(1)) & (freq <= args.FreqRange(2));
-            freq = freq(freq_mask);
-            fprintf('Selected Frequencies: %s\n', num2str(freq));
-            psd = psd(freq_mask);
-
-            % Create analysis plot
-            createPowerPlot(freq, psd, G.timepointS, args);
-        end
-
     %% Helper functions
     function [data, valid] = getCurrentEpochData(G)
-        % Retrieve current data window
+        % GETCURRENT6SECDATA Retrieve exactly 6 seconds of EEG around G.timepointS.
         valid = true;
-        n = round((G.show*G.epochLen)/G.dt/2);
-        i = round(G.timepointS / G.dt);
-        ii = i-n:i+n;
-        fprintf("N is: %s\n", num2str(n))
-        fprintf("TIMEPOINTS is: %s\n", num2str(G.timepointS))
-        fprintf("DT is: %s\n", num2str(G.dt))
-        fprintf("I is: %s\n", num2str(i))
-        fprintf("II is: %s\n", num2str(ii))
+
         try
-            if isfield(G, 'currentEpoch') && ~isempty(G.currentEpoch)
-                data = G.currentEpoch;
-            else
-                data = G.EEG(ii);
+            % 1) Convert center time (seconds) to a sample index
+            iCenter = round(G.timepointS / G.dt);
+
+            % 2) We want total 6 seconds => 6 / dt = ~3072 samples if fs=512
+            %    Half of that is 3 seconds => halfSamples = 3/dt = ~1536
+            halfSec = 2;  % half of 6
+            halfSamples = round(halfSec / G.dt);  % about 1536 if fs=512
+
+            % 3) Construct the index range (6 seconds total)
+            %    iCenter - halfSamples .. iCenter + halfSamples -1
+            %    So total points = 2*halfSamples
+            sampleStart = iCenter - halfSamples;
+            sampleEnd   = iCenter + halfSamples - 1;  % minus 1 to get total 6s
+            fprintf("SAMPLE START: %s", num2str(sampleStart));
+            fprintf("SAMPLE END: %s", num2str(sampleEnd));
+
+            % 4) Clamp to avoid out-of-bounds
+            if sampleStart < 1
+                sampleStart = 1;
             end
+            if sampleEnd > length(G.EEG)
+                sampleEnd = length(G.EEG);
+            end
+
+            % 5) Extract the EEG data slice
+            data = G.EEG(sampleStart : sampleEnd);
+
         catch
             valid = false;
             data = [];
-            errordlg('Error accessing EEG data', 'Data Error');
+            errordlg('Error accessing 6-second EEG data', 'Data Error');
         end
-
     end
 
     function [window, noverlap, nfft] = calculateWelchParams(data, args)
@@ -1442,51 +1349,57 @@ end
     end
 
     function createPowerPlot(freq, psd, timepoint, args)
-        % Convert to dB scale
-        psd_db = psd;
+        % 1) Convert PSD to dB scale if needed:
+        psd_db = psd;  % or "psd_db = 10*log10(psd);" if you want dB
 
-        % Create figure with standardized size
-        fig = figure('Name','Power Spectrum - Bar Chart',...
-                    'NumberTitle','off',...
-                    'Position',[100 100 800 400]);
+        % 2) Clear the existing plot on G.A10
+        cla(G.A10);
+        hold(G.A10, 'on');
 
-        % Create main axes
-        ax = subplot(1,1,1);
+        % 3) Create bar chart on G.A10
+        barWidth = 1;  % Each bar represents a 1 Hz bin
+        b = bar(G.A10, freq, psd_db, barWidth);
+        set(b,'FaceColor',[0.2 0.4 0.6], 'EdgeColor','none');
 
-        % Set bar width to 1 Hz
-        bar_width = 1;  % Each bar represents a 1 Hz bin
+        % 4) Format the axes
+        xlabel(G.A10, 'Frequency (Hz)');
+        ylabel(G.A10, 'Power Density (dB/Hz)');
+        title(G.A10, sprintf('Power Spectrum @ %s', sec2hr(timepoint)));
+        grid(G.A10, 'on');
 
-        % Create bar chart with aligned edges
-        b = bar(ax, freq, psd_db, bar_width);
-        set(b, 'FaceColor', [0.2 0.4 0.6], 'EdgeColor', 'none');
+        % 5) Set axis limits and ticks from args
+        xlim(G.A10, [args.FreqRange(1), args.FreqRange(2)]);
+        xticks(G.A10, args.FreqRange(1):1:args.FreqRange(2));
 
-        % Format axes
-        xlabel(ax, 'Frequency (Hz)');
-        ylabel(ax, 'Power Density (dB/Hz)');
-        title(ax, sprintf('Power Spectrum @ %s', sec2hr(timepoint)));
-        grid(ax, 'on');
-
-        % Set axis limits and ticks
-        xlim(ax, [args.FreqRange(1) args.FreqRange(2)]);
-        xticks(ax, args.FreqRange(1):1:args.FreqRange(2));
-
-        % Add informational text
+        % 6) Annotate with info about the window
         info_text = {
-            sprintf('Window: %.1fs', args.WindowDuration)
+            sprintf('Window: %.1f s', args.WindowDuration)
             sprintf('Overlap: %.0f%%', args.WindowOverlap*100)
-            sprintf('Resolution: %.2f Hz', 1) % Set resolution to 1 Hz
+            sprintf('Resolution: %.2f Hz', 1) % if 1 Hz bins
             sprintf('FFT: %d pts', round(args.WindowDuration*args.EpSampleFrequency))
         };
 
-        text(ax, 0.7, max(psd_db)-2, info_text,...
-             'BackgroundColor','w', 'VerticalAlignment','top',...
-             'HorizontalAlignment','left');
+        if ~isempty(psd_db)
+            % 7) Adjust Y-axis to fit data nicely
+            yRange = max(psd_db) - min(psd_db);
+            if yRange < eps
+                yRange = 0.1;  % avoid zero range
+            end
+            yMin = min(psd_db) - 0.5*yRange;
+            yMax = max(psd_db) + 0.5*yRange;
+            ylim(G.A10, [yMin, yMax]);
 
-        % Add dynamic axis scaling
-        y_range = max(psd_db) - min(psd_db);
-        ylim(ax, [min(psd_db)-0.5*y_range max(psd_db)+0.5*y_range]);
+            % Place the text in the upper region
+            textX = mean(args.FreqRange) + 0.1*(args.FreqRange(2)-args.FreqRange(1));
+            textY = yMax - 0.1*yRange;
+            text(G.A10, textX, textY, info_text, ...
+                 'BackgroundColor','w',...
+                 'VerticalAlignment','top',...
+                 'HorizontalAlignment','left');
+        end
+
+        hold(G.A10, 'off');
     end
-
     function fct_zoomreset_t(src,~) % reset zoom level
 
         axes(G.A3);
