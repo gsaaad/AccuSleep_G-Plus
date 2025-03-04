@@ -153,44 +153,42 @@ set(G.A5,'Box','off','XLim',[0 1],'YLim',[0 0.1],'XTick',[],'YTick',[],'Clipping
 G.A5.Toolbar.Visible = 'off';
 
 % EEG spectrogram
-G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.91 0.87 0.08]);
+G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.245 0.87 0.065]);
 G.A3.Toolbar.Visible = 'off';
 set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
 ylabel(G.A3, 'Spec.');
 
 % EEG signal - 1 Minute
-G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.71, 0.87 .09]);
+G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.885, 0.87 .09]);
 G.A6a.Toolbar.Visible = 'off';
 ylabel(G.A6a, 'EEG1');
 set(G.A6a,'XTick',[])
 
 % % EMG signal - 1 Minute
-G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.60 0.87 .09]);
+G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.775 0.87 .09]);
 G.A7a.Toolbar.Visible = 'off';
 ylabel(G.A7a, 'EMG1');
 set(G.A7a,'XTick',[])
 
-
 % EEG signal  - main
-G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.49 0.87 .09]);
+G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.66 0.87 .09]);
 G.A6.Toolbar.Visible = 'off';
 ylabel(G.A6, 'EEG2');
 
 % EMG signal  - main
-G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.36 0.87 .09]);
+G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.54 0.87 .09]);
 G.A7.Toolbar.Visible = 'off';
 ylabel(G.A7, 'EMG2');
 set(G.A7,'XTick',[])
 
-
 % EEG signal + 1 minute
-G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.245 0.87 .09]);
+G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.435 0.87 .09]);
 G.A6b.Toolbar.Visible = 'off';
 ylabel(G.A6b, 'EEG3');
 set(G.A6b,'XTick',[])
 
 % EMG signal + 1 minute
-G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.13 0.87 .09]);
+G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.325 0.87 .09]);
 G.A7b.Toolbar.Visible = 'off';
 ylabel(G.A7b, 'EMG3');
 set(G.A7b,'XTick',[])
@@ -214,7 +212,7 @@ set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
 
 % Upper time point indicator
-G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.893  0.87 0.015],'XTick',[],'YTick',[]);
+G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.225  0.87 0.015],'XTick',[],'YTick',[]);
 G.A8.Toolbar.Visible = 'off';
 
 % --- Compute Global EMG Limits (in volts) ---
@@ -280,7 +278,7 @@ G.showMenu = uicontrol(WIN,'Style','popupmenu','Units','normalized',...
     'Value',6);
 
 G.meanDelta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-    'Position', [.925 .22 .07 .035], 'String', '', ...
+    'Position', [.925 .24 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.meanTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .20 .07 .035], 'String', '', ...
@@ -302,7 +300,7 @@ G.lims = xlim(G.A3); % store maximum x limits for the upper panel plots
 set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
 
-G.A10 = axes('Units', 'Normalized', 'Position', [0.05 0.82  0.87 0.07]);
+G.A10 = axes('Units', 'Normalized', 'Position', [0.05 0.135  0.87 0.07]);
 G.A10.Toolbar.Visible = 'off';
 
 updateState;
