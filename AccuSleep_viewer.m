@@ -26,7 +26,7 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
 %   epochs as the EEG/EMG signals and values ranging from 1 to 4.
 
 %% Check the inputs
-G = struct; % holds everything
+G =     struct; % holds everything
 
 % make sure we have at least 3 arguments
 switch nargin
@@ -286,6 +286,12 @@ G.meanTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
 G.thetaRatio = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .16 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+G.eegIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    'Position', [.925 .32 .07 .035], 'String', '', ...
+    'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+G.emgIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+    'Position', [.925 .28 .07 .035], 'String', '', ...
+    'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 % keep track of the current timepoint
 G.index = 1; % index of current time point
 G.timepointS = G.specTs(G.index); % current time point, in seconds
@@ -300,14 +306,20 @@ G.lims = xlim(G.A3); % store maximum x limits for the upper panel plots
 set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
 
-G.A10 = axes('Units', 'Normalized', 'Position', [0.05 0.135  0.87 0.07]);
+G.A10 = axes('Units', 'Normalized', 'Position', [0.3 0.135  0.40 0.07]);
 G.A10.Toolbar.Visible = 'off';
 
 updateState;
-[totalfreq, totalpsdVals] = computeBinPSD(G.EEG, 512, 2, 0.9);
-fprintf("Total PSD Vals: %s \n %s",min(totalpsdVals), max(totalpsdVals))
+
+
+[totalfreq, totalpsdVals] = computeBinPSD(G.EEG, 512, 4, 0.9);
+meanVal = mean(totalpsdVals);
+stdDev = std(totalpsdVals);
+ylim(G.A10, [0, meanVal + 3*stdDev]);
+% fprintf("Total PSD Vals: %s \n %s",min(totalpsdVals), max(totalpsdVals))
 % Plot everything else
 updatePlots;
+
 
 message = 'Data loaded successfully';
 %% Functions used by buttons, keypresses, etc.
@@ -374,6 +386,11 @@ message = 'Data loaded successfully';
         yr_EMG = y_max_EMG - y_min_EMG;
         padding_EMG = 0.02 * yr_EMG;
 
+        % Compute the integral of the current EMG
+        % curEMG_integral = computeSignalIntegral(curEMG,512);
+        % set(G.emgIntegral, 'String', sprintf('EMG Integral: %.10f ', curEMG_integral));
+
+
         if yr_EMG < eps
             y_min_dyn_EMG = y_min_EMG - 0.1;
             y_max_dyn_EMG = y_max_EMG + 0.1;
@@ -409,6 +426,9 @@ message = 'Data loaded successfully';
         y_max_EEG = max(curEEG);
         yr_EEG = y_max_EEG - y_min_EEG;
         padding_EEG = 0.02 * yr_EEG;
+        % Compute the integral of the current EMG
+        % curEEG_integral = computeSignalIntegral(curEEG,512);
+        % set(G.eegIntegral, 'String', sprintf('EEG Integral: %.10f ', curEEG_integral));
         if yr_EEG < eps
             y_min_dyn_EEG = y_min_EEG - 0.1;
             y_max_dyn_EEG = y_max_EEG + 0.1;
@@ -668,7 +688,80 @@ message = 'Data loaded successfully';
 
 
     end
+    function integralSignal = computeSignalIntegral(signal, fs, options)
+        % COMPUTESIGNALINTEGRAL Computes the integral of a signal (e.g., EEG or EMG)
+        %   integralSignal = computeSignalIntegral(signal, fs, options) integrates
+        %   the input signal over time using numerical integration.
+        %
+        %   Inputs:
+        %   - signal: Vector of signal values (e.g., EEG or EMG samples, [nSamples x 1])
+        %   - fs: Sampling frequency in Hz (e.g., 256 for 256 Hz sampling)
+        %   - options: Optional structure with fields:
+        %       - 'baselineCorrect': Logical (true/false, default false) to remove mean before integration
+        %       - 'normalize': Logical (true/false, default false) to normalize the integral by time
+        %       - 'method': String ('trapz' or 'cumsum', default 'trapz') for integration method
+        %
+        %   Output:
+        %   - integralSignal: Vector of the same length as signal, representing the integral
+        %
+        %   Example:
+        %   signal = randn(1000, 1);  % Example EEG/EMG signal
+        %   fs = 256;  % Sampling frequency
+        %   integral = computeSignalIntegral(signal, fs, struct('baselineCorrect', true));
 
+        % Default options
+        if nargin < 3 || isempty(options)
+            options.baselineCorrect = false;
+            options.normalize = false;
+            options.method = 'trapz';
+        end
+
+        % Ensure signal is a column vector
+        if isrow(signal)
+            signal = signal';
+        end
+
+        % Get number of samples
+        nSamples = length(signal);
+
+        % Create time vector (in seconds)
+        t = (0:nSamples-1) / fs;
+
+        % Baseline correction (remove mean if requested)
+        if options.baselineCorrect
+            signal = signal - mean(signal);
+            fprintf('Signal baseline corrected (mean removed).\n');
+        end
+
+        % Compute integral based on method
+        switch lower(options.method)
+            case 'trapz'
+                % Use trapezoidal numerical integration (MATLAB's trapz)
+                integralSignal = trapz(t, signal);
+                % Reshape to match signal length for cumulative effect
+                integralSignal = cumsum(signal) * (t(2) - t(1)); % Scale by time step
+            case 'cumsum'
+                % Use cumulative sum (simpler but less accurate for non-uniform data)
+                dt = 1 / fs;  % Time step
+                integralSignal = cumsum(signal) * dt;
+            otherwise
+                error('Unsupported integration method. Use ''trapz'' or ''cumsum''.');
+        end
+
+        % Normalize by total time if requested
+        if options.normalize
+            totalTime = t(end) - t(1);
+            integralSignal = integralSignal / totalTime;
+            fprintf('Integral normalized by total time (%f seconds).\n', totalTime);
+        end
+
+        % Ensure output is a column vector
+        if isrow(integralSignal)
+            integralSignal = integralSignal';
+        end
+
+        fprintf('Integral computed with %d samples, fs = %d Hz.\n', nSamples, fs);
+    end
     function printBandMeans(freq, psd_dB)
         % Define frequency bands and a corresponding label (for printing)
         bands = {
@@ -699,9 +792,9 @@ message = 'Data loaded successfully';
         end
 
         % Calculate the mean power in the 0-4 Hz band
-        meanPower_0_4Hz = mean(psd_dB(freq >= 0 & freq <= 4));
-        meanPower_5_9Hz = mean(psd_dB(freq >=5 & freq <=9));
-        tRatio = ((meanPower_5_9Hz-meanPower_0_4Hz)/meanPower_0_4Hz);
+        meanPower_0_4Hz = sum(psd_dB(freq >= 0 & freq <= 4));
+        meanPower_5_9Hz = sum(psd_dB(freq >=5 & freq <=9));
+        tRatio = (meanPower_5_9Hz/meanPower_0_4Hz);
 
         % Update the text box
         set(G.meanDelta, 'String', sprintf('Delta: %.10f ', meanPower_0_4Hz));
@@ -719,7 +812,7 @@ message = 'Data loaded successfully';
         hold(G.A10, 'on');
 
         % Welch analysis parameters
-        windowSeconds  = 2;      % sub-window length for Welch
+        windowSeconds  = 4;      % sub-window length for Welch
         overlapPercent = 0.9;    % 90% overlap
         freqRange      = [0 20]; % show 0..20 Hz
         fs             = 1 / G.dt;  % sampling rate
@@ -731,101 +824,179 @@ message = 'Data loaded successfully';
         binEnd    = centerBin + n;
 
         % We'll track min/max across all bins to standardize the y-scale
+        current_data = getBinData(G, centerBin);
+        [freq, psdVals] = computeBinPSD(current_data, fs, windowSeconds, overlapPercent);
+        localMax = max(psdVals);
+        localMin = min(psdVals);
 
-        for binIdx = binStart : binEnd
-            % 2) Extract data for this bin
-            data = getBinData(G, binIdx);
-
-            if isempty(data)
-                continue;  % skip invalid or out-of-bounds bin
+        mask = (freq>= freqRange(1)) & (freq <= freqRange(2));
+        freq = freq(mask);
+        psdVals = psdVals(mask);
+        psd_dB = psdVals;
+        printBandMeans(freq, psd_dB);
+        psd_dB = psdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(freq), 3);  % each row = RGB
+        for i = 1:length(freq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
             end
-
-            % 3) Compute PSD (freq, psdVals) via Welch
-            [freq, psdVals] = computeBinPSD(data, fs, windowSeconds, overlapPercent);
-
-            localMax = max(psdVals);
-            localMin = min(psdVals);
-
-
-            % 4) Filter freq range
-            mask = (freq >= freqRange(1)) & (freq <= freqRange(2));
-            freq    = freq(mask);
-            psdVals = psdVals(mask);
-
-            % 5) Convert to dB if desired
-            % psd_dB = 10 * log10(psdVals);
-            psd_dB = psdVals;
-            printBandMeans(freq, psd_dB);
-            psd_dB = psdVals;
-
-            % 6) Color-code each frequency point in freq by 4 bands:
-            %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-            cMap = zeros(length(freq), 3);  % each row = RGB
-            for i = 1:length(freq)
-                f = freq(i);
-                if f >= 0  && f <= 4
-                    cMap(i,:) = [1, 0, 0];      % red
-                elseif f > 4  && f <= 9
-                    cMap(i,:) = [0, 0, 1];      % blue
-                elseif f > 9 && f <= 15
-                    cMap(i,:) = [0, 1, 0];      % green
-                else
-                    cMap(i,:) = [0.5, 0.5, 0.5];% gray
-                end
-            end
-
-            % Define frequency bands and corresponding colors
-            bands = {
-                [0, 4],      [1 0 0];      % red for 0–4 Hz
-                [5, 9],      [0 0 1];      % blue for 5–9 Hz
-                [10, 15],    [0 1 0];      % green for 10–15 Hz
-                [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-            };
-
-            nBands = size(bands, 1);
-            bandMeans = zeros(1, nBands);
-
-            % Calculate the mean PSD (in dB) for each frequency band
-            for b = 1:nBands
-                range = bands{b, 1};
-                idx = (freq >= range(1)) & (freq <= range(2));
-                if any(idx)
-                    bandMeans(b) = mean(psd_dB(idx));
-                else
-                    bandMeans(b) = NaN;  % or 0 if you prefer
-                end
-            end
-
-            % 7) Create a bar chart for this bin's PSD
-            %    "FaceColor=flat" means we can assign colors via CData.
-            %    "FaceAlpha=0.3" for partial transparency.
-            b = bar(G.A10, freq, psd_dB, 1, ...
-                    'EdgeColor','none', ...
-                    'FaceColor','flat', ...
-                    'FaceAlpha',0.3, ...
-                    'DisplayName', sprintf('Epoch# %d', binIdx));
-
-            % Assign the color map
-            b.CData = cMap;
-
         end
 
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (freq >= range(1)) & (freq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(psd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        b = bar(G.A10, freq, psd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin));
+
+        % Assign the color map
+        b.CData = cMap;
         % 9) Axis labeling
         xlabel(G.A10, 'Frequency (Hz)');
         ylabel(G.A10, 'Power');
         xlim(G.A10, freqRange);
         grid(G.A10,'on');
         legend(G.A10,'show');  % show each bin in the legend
-
+        new_max = 0.00000001;
         % 10) Standardize y-lim across all bins
-            yRange = localMax - localMin;
-            ymin   = localMin - 0.1*yRange;
-            ymax   = max(totalpsdVals);
-            ylim(G.A10, [ymin, ymax]);
-
+        yRange = new_max - localMin;
+        ymin   = localMin - 0.1*yRange;
+        % ymax   = max(totalpsdVals);
+        ymax = new_max;
+        % ylim(G.A10, [ymin, ymax]);
 
         hold(G.A10, 'off');
+        % for binIdx = binStart : binEnd
+        %     % 2) Extract data for this bin
+        %     data = getBinData(G, binIdx);
+        %
+        %
+        %
+        %     if isempty(data)
+        %         continue;  % skip invalid or out-of-bounds bin
+        %     end
+        %
+        %     % 3) Compute PSD (freq, psdVals) via Welch
+        %     [freq, psdVals] = computeBinPSD(data, fs, windowSeconds, overlapPercent);
+        %
+        %     localMax = max(psdVals);
+        %     localMin = min(psdVals);
+        %
+        %
+        %     % 4) Filter freq range
+        %     mask = (freq >= freqRange(1)) & (freq <= freqRange(2));
+        %     freq    = freq(mask);
+        %     psdVals = psdVals(mask);
+        %
+        %     % 5) Convert to dB if desired
+        %     % psd_dB = 10 * log10(psdVals);
+        %     psd_dB = psdVals;
+        %     printBandMeans(freq, psd_dB);
+        %     psd_dB = psdVals;
+        %
+        %     % 6) Color-code each frequency point in freq by 4 bands:
+        %     %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        %     cMap = zeros(length(freq), 3);  % each row = RGB
+        %     for i = 1:length(freq)
+        %         f = freq(i);
+        %         if f >= 0  && f <= 4
+        %             cMap(i,:) = [1, 0, 0];      % red
+        %         elseif f > 4  && f <= 9
+        %             cMap(i,:) = [0, 0, 1];      % blue
+        %         elseif f > 9 && f <= 15
+        %             cMap(i,:) = [0, 1, 0];      % green
+        %         else
+        %             cMap(i,:) = [0.5, 0.5, 0.5];% gray
+        %         end
+        %     end
+        %
+        %     % Define frequency bands and corresponding colors
+        %     bands = {
+        %         [0, 4],      [1 0 0];      % red for 0–4 Hz
+        %         [5, 9],      [0 0 1];      % blue for 5–9 Hz
+        %         [10, 15],    [0 1 0];      % green for 10–15 Hz
+        %         [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        %     };
+        %
+        %     nBands = size(bands, 1);
+        %     bandMeans = zeros(1, nBands);
+        %
+        %     % Calculate the mean PSD (in dB) for each frequency band
+        %     for b = 1:nBands
+        %         range = bands{b, 1};
+        %         idx = (freq >= range(1)) & (freq <= range(2));
+        %         if any(idx)
+        %             bandMeans(b) = mean(psd_dB(idx));
+        %         else
+        %             bandMeans(b) = NaN;  % or 0 if you prefer
+        %         end
+        %     end
+        %
+        %     % 7) Create a bar chart for this bin's PSD
+        %     %    "FaceColor=flat" means we can assign colors via CData.
+        %     %    "FaceAlpha=0.3" for partial transparency.
+        %     b = bar(G.A10, freq, psd_dB, 1, ...
+        %             'EdgeColor','none', ...
+        %             'FaceColor','flat', ...
+        %             'FaceAlpha',0.3, ...
+        %             'DisplayName', sprintf('Epoch# %d', binIdx));
+        %
+        %     % Assign the color map
+        %     b.CData = cMap;
+        %
+        % end
+        %
+        % % 9) Axis labeling
+        % xlabel(G.A10, 'Frequency (Hz)');
+        % ylabel(G.A10, 'Power');
+        % xlim(G.A10, freqRange);
+        % grid(G.A10,'on');
+        % legend(G.A10,'show');  % show each bin in the legend
+        %
+        % % 10) Standardize y-lim across all bins
+        %     yRange = localMax - localMin;
+        %     ymin   = localMin - 0.1*yRange;
+        %     % ymax   = max(totalpsdVals);
+        %     ymax = localMax;
+        %     ylim(G.A10, [ymin, ymax]);
+        %
+        %
+        % hold(G.A10, 'off');
     end
+
     function data = getBinData(G, binIdx)
         data = [];
         fs = 1 / G.dt;  % sampling freq
@@ -1259,145 +1430,7 @@ end
     end
 
     %% Helper functions
-    function [data, valid] = getCurrentEpochData(G)
-        % GETCURRENT6SECDATA Retrieve exactly 6 seconds of EEG around G.timepointS.
-        valid = true;
 
-        try
-            % 1) Convert center time (seconds) to a sample index
-            iCenter = round(G.timepointS / G.dt);
-
-            % 2) We want total 6 seconds => 6 / dt = ~3072 samples if fs=512
-            %    Half of that is 3 seconds => halfSamples = 3/dt = ~1536
-            halfSec = 2;  % half of 6
-            halfSamples = round(halfSec / G.dt);  % about 1536 if fs=512
-
-            % 3) Construct the index range (6 seconds total)
-            %    iCenter - halfSamples .. iCenter + halfSamples -1
-            %    So total points = 2*halfSamples
-            sampleStart = iCenter - halfSamples;
-            sampleEnd   = iCenter + halfSamples - 1;  % minus 1 to get total 6s
-            fprintf("SAMPLE START: %s", num2str(sampleStart));
-            fprintf("SAMPLE END: %s", num2str(sampleEnd));
-
-            % 4) Clamp to avoid out-of-bounds
-            if sampleStart < 1
-                sampleStart = 1;
-            end
-            if sampleEnd > length(G.EEG)
-                sampleEnd = length(G.EEG);
-            end
-
-            % 5) Extract the EEG data slice
-            data = G.EEG(sampleStart : sampleEnd);
-
-        catch
-            valid = false;
-            data = [];
-            errordlg('Error accessing 6-second EEG data', 'Data Error');
-        end
-    end
-
-    function [window, noverlap, nfft] = calculateWelchParams(data, args)
-        % Check if args is a valid struct
-        if ~isstruct(args)
-            error('args must be a struct');
-        end
-
-        % Check if required fields exist in args
-        requiredFields = {'WindowDuration', 'WindowOverlap', 'EpSampleFrequency'};
-        for i = 1:length(requiredFields)
-            if ~isfield(args, requiredFields{i})
-                error([sprintf('Missing required field: %s', requiredFields{i}), ...
-                       ' in args struct']);
-            end
-        end
-
-        % Calculate window length in samples
-        n = length(data);
-        window = round(args.WindowDuration * args.EpSampleFrequency);
-
-        % Check if window length is valid
-        if window > n
-            error('Window length cannot be greater than data length');
-        end
-
-        % Calculate overlap in samples
-        noverlap = round(window * args.WindowOverlap);
-
-        % Check if overlap is valid
-        if noverlap > window
-            error('Overlap cannot be greater than window length');
-        end
-
-        % Set nfft to achieve 1 Hz resolution
-        nfft = args.EpSampleFrequency;
-
-        % Return calculated parameters
-        return;
-    end
-    function handlePSDError(ME)
-        % Handle PSD calculation errors
-        err_msg = sprintf(['PSD Calculation Error:\n%s\n' ...
-                          'Recommended troubleshooting:\n' ...
-                          '1. Check data length vs window size\n' ...
-                          '2. Verify frequency range settings\n' ...
-                          '3. Confirm sampling frequency'], ME.message);
-        errordlg(err_msg, 'Analysis Error');
-    end
-
-    function createPowerPlot(freq, psd, timepoint, args)
-        % 1) Convert PSD to dB scale if needed:
-        psd_db = psd;  % or "psd_db = 10*log10(psd);" if you want dB
-
-        % 2) Clear the existing plot on G.A10
-        cla(G.A10);
-        hold(G.A10, 'on');
-
-        % 3) Create bar chart on G.A10
-        barWidth = 1;  % Each bar represents a 1 Hz bin
-        b = bar(G.A10, freq, psd_db, barWidth);
-        set(b,'FaceColor',[0.2 0.4 0.6], 'EdgeColor','none');
-
-        % 4) Format the axes
-        xlabel(G.A10, 'Frequency (Hz)');
-        ylabel(G.A10, 'Power Density (dB/Hz)');
-        title(G.A10, sprintf('Power Spectrum @ %s', sec2hr(timepoint)));
-        grid(G.A10, 'on');
-
-        % 5) Set axis limits and ticks from args
-        xlim(G.A10, [args.FreqRange(1), args.FreqRange(2)]);
-        xticks(G.A10, args.FreqRange(1):1:args.FreqRange(2));
-
-        % 6) Annotate with info about the window
-        info_text = {
-            sprintf('Window: %.1f s', args.WindowDuration)
-            sprintf('Overlap: %.0f%%', args.WindowOverlap*100)
-            sprintf('Resolution: %.2f Hz', 1) % if 1 Hz bins
-            sprintf('FFT: %d pts', round(args.WindowDuration*args.EpSampleFrequency))
-        };
-
-        if ~isempty(psd_db)
-            % 7) Adjust Y-axis to fit data nicely
-            yRange = max(psd_db) - min(psd_db);
-            if yRange < eps
-                yRange = 0.1;  % avoid zero range
-            end
-            yMin = min(psd_db) - 0.5*yRange;
-            yMax = max(psd_db) + 0.5*yRange;
-            ylim(G.A10, [yMin, yMax]);
-
-            % Place the text in the upper region
-            textX = mean(args.FreqRange) + 0.1*(args.FreqRange(2)-args.FreqRange(1));
-            textY = yMax - 0.1*yRange;
-            text(G.A10, textX, textY, info_text, ...
-                 'BackgroundColor','w',...
-                 'VerticalAlignment','top',...
-                 'HorizontalAlignment','left');
-        end
-
-        hold(G.A10, 'off');
-    end
     function fct_zoomreset_t(src,~) % reset zoom level
 
         axes(G.A3);
