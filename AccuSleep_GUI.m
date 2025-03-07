@@ -1,6 +1,7 @@
 function varargout = AccuSleep_GUI(varargin)
 % AccuSleep_GUI A GUI for classifying rodent sleep stages
 % Zeke Barger, 081120
+% George Saad, 020225
 % To see the user manual, run this code and press the user manual button, or run:
 % doc AccuSleep_instructions
 
@@ -864,9 +865,9 @@ function viewerTypeBox_Callback(hObject, eventdata, handles)
 
     % For example, if checked => an alternative viewer, else => classic
     if val == 1
-        setappdata(handles.D, 'viewerType', 'alternative');
+        setappdata(handles.D, 'viewerType', 'George-Saad_Viewer');
     else
-        setappdata(handles.D, 'viewerType', 'classic');
+        setappdata(handles.D, 'viewerType', 'Accusleep_Viewer');
     end
 
     % Optionally update the GUI or show a message
