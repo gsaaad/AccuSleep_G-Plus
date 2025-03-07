@@ -78,7 +78,7 @@ clear('EMG','EEG');
 G.processedEMG = processEMG(standardizeSR(G.EMG, G.originalSR, G.SR), G.SR, G.epochLen);
 % set ceiling for EMG trace at 2.5 SD when plotting
 G.cappedEMG = G.processedEMG;
-emgCap = mean(G.cappedEMG) + 2.5*std(G.cappedEMG);
+emgCap = mean(G.cappedEMG) + 3*std(G.cappedEMG);
 G.cappedEMG(G.cappedEMG > emgCap) = emgCap;
 
 % set various parameters
@@ -153,42 +153,42 @@ set(G.A5,'Box','off','XLim',[0 1],'YLim',[0 0.1],'XTick',[],'YTick',[],'Clipping
 G.A5.Toolbar.Visible = 'off';
 
 % EEG spectrogram
-G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.245 0.87 0.065]);
+G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.92 0.87 0.065]);
 G.A3.Toolbar.Visible = 'off';
 set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
 ylabel(G.A3, 'Spec.');
 
 % EEG signal - 1 Minute
-G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.885, 0.87 .09]);
+G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.82, 0.87 .09]);
 G.A6a.Toolbar.Visible = 'off';
 ylabel(G.A6a, 'EEG1');
 set(G.A6a,'XTick',[])
 
 % % EMG signal - 1 Minute
-G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.775 0.87 .09]);
+G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.72 0.87 .09]);
 G.A7a.Toolbar.Visible = 'off';
 ylabel(G.A7a, 'EMG1');
 set(G.A7a,'XTick',[])
 
 % EEG signal  - main
-G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.66 0.87 .09]);
+G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.62 0.87 .09]);
 G.A6.Toolbar.Visible = 'off';
 ylabel(G.A6, 'EEG2');
 
 % EMG signal  - main
-G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.54 0.87 .09]);
+G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.50 0.87 .09]);
 G.A7.Toolbar.Visible = 'off';
 ylabel(G.A7, 'EMG2');
 set(G.A7,'XTick',[])
 
 % EEG signal + 1 minute
-G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.435 0.87 .09]);
+G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.40 0.87 .09]);
 G.A6b.Toolbar.Visible = 'off';
 ylabel(G.A6b, 'EEG3');
 set(G.A6b,'XTick',[])
 
 % EMG signal + 1 minute
-G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.325 0.87 .09]);
+G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.30 0.87 .09]);
 G.A7b.Toolbar.Visible = 'off';
 ylabel(G.A7b, 'EMG3');
 set(G.A7b,'XTick',[])
@@ -212,7 +212,7 @@ set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
 
 % Upper time point indicator
-G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.225  0.87 0.015],'XTick',[],'YTick',[]);
+G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.905  0.87 0.015],'XTick',[],'YTick',[]);
 G.A8.Toolbar.Visible = 'off';
 
 % --- Compute Global EMG Limits (in volts) ---
@@ -306,13 +306,15 @@ G.lims = xlim(G.A3); % store maximum x limits for the upper panel plots
 set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
 
-G.A10 = axes('Units', 'Normalized', 'Position', [0.3 0.135  0.40 0.07]);
-G.A10.Toolbar.Visible = 'off';
+G.A10 = axes('Units', 'Normalized', 'Position', [0.3 0.135 0.4 0.12]);
+G.A15.Toolbar.Visible = 'off';
 
 updateState;
 
+% EMG_integral = computeSignalIntegral(G.processedEMG,G.SR);
+% G.EMG_Integral = EMG_integral;
 
-[totalfreq, totalpsdVals] = computeBinPSD(G.EEG, 512, 4, 0.9);
+[totalfreq, totalpsdVals] = computeBinPSD(G.EEG, G.SR, 4, 0.9);
 meanVal = mean(totalpsdVals);
 stdDev = std(totalpsdVals);
 ylim(G.A10, [0, meanVal + 3*stdDev]);
@@ -381,14 +383,14 @@ message = 'Data loaded successfully';
 
         % Compute dynamic y-axis limits from the current EMG window data (in volts)
         curEMG = G.EMG(ii);
+        % curEMGIntegral = G.EMG_Integral(ii);
         y_min_EMG = min(curEMG);
         y_max_EMG = max(curEMG);
         yr_EMG = y_max_EMG - y_min_EMG;
         padding_EMG = 0.02 * yr_EMG;
 
-        % Compute the integral of the current EMG
-        % curEMG_integral = computeSignalIntegral(curEMG,512);
-        % set(G.emgIntegral, 'String', sprintf('EMG Integral: %.10f ', curEMG_integral));
+        % set emgIntegral
+        % set(G.emgIntegral, 'String', sprintf('EMG Integral: %.10f ', curEMGIntegral));
 
 
         if yr_EMG < eps
@@ -427,7 +429,7 @@ message = 'Data loaded successfully';
         yr_EEG = y_max_EEG - y_min_EEG;
         padding_EEG = 0.02 * yr_EEG;
         % Compute the integral of the current EMG
-        % curEEG_integral = computeSignalIntegral(curEEG,512);
+        % curEEG_integral = computeSignalIntegral(curEEG,G.SR);
         % set(G.eegIntegral, 'String', sprintf('EEG Integral: %.10f ', curEEG_integral));
         if yr_EEG < eps
             y_min_dyn_EEG = y_min_EEG - 0.1;
@@ -762,6 +764,7 @@ message = 'Data loaded successfully';
 
         fprintf('Integral computed with %d samples, fs = %d Hz.\n', nSamples, fs);
     end
+
     function printBandMeans(freq, psd_dB)
         % Define frequency bands and a corresponding label (for printing)
         bands = {
@@ -786,10 +789,10 @@ message = 'Data loaded successfully';
         end
 
         % Print the mean power for each band
-        for b = 1:nBands
-            fprintf('Mean power in %d-%d Hz (%s): %.10f dB\n', ...
-                bands{b, 1}(1), bands{b, 1}(2), bands{b, 2}, bandMeans(b));
-        end
+        % for b = 1:nBands
+        %     fprintf('Mean power in %d-%d Hz (%s): %.10f dB\n', ...
+        %         bands{b, 1}(1), bands{b, 1}(2), bands{b, 2}, bandMeans(b));
+        % end
 
         % Calculate the mean power in the 0-4 Hz band
         meanPower_0_4Hz = sum(psd_dB(freq >= 0 & freq <= 4));
@@ -890,13 +893,6 @@ message = 'Data loaded successfully';
         xlim(G.A10, freqRange);
         grid(G.A10,'on');
         legend(G.A10,'show');  % show each bin in the legend
-        new_max = 0.00000001;
-        % 10) Standardize y-lim across all bins
-        yRange = new_max - localMin;
-        ymin   = localMin - 0.1*yRange;
-        % ymax   = max(totalpsdVals);
-        ymax = new_max;
-        % ylim(G.A10, [ymin, ymax]);
 
         hold(G.A10, 'off');
         % for binIdx = binStart : binEnd
