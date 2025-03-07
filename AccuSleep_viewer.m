@@ -794,7 +794,7 @@ message = 'Data loaded successfully';
         % Calculate the mean power in the 0-4 Hz band
         meanPower_0_4Hz = sum(psd_dB(freq >= 0 & freq <= 4));
         meanPower_5_9Hz = sum(psd_dB(freq >=5 & freq <=9));
-        tRatio = (meanPower_5_9Hz/meanPower_0_4Hz);
+        tRatio = (meanPower_5_9Hz-meanPower_0_4Hz)/meanPower_0_4Hz;
 
         % Update the text box
         set(G.meanDelta, 'String', sprintf('Delta: %.10f ', meanPower_0_4Hz));
