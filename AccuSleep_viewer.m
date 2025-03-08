@@ -208,8 +208,8 @@ G.A10.Toolbar.Visible = 'off';
 
 
 % -4 PSD
-G.A18 = axes('Units', 'Normalized', 'Position', [0.05 0.155 0.085 0.10]);
-G.A18.Toolbar.Visible = 'off';
+G.A17 = axes('Units', 'Normalized', 'Position', [0.05 0.155 0.085 0.10]);
+G.A17.Toolbar.Visible = 'off';
 % -3 PSD
 G.A18 = axes('Units', 'Normalized', 'Position', [0.145 0.155 0.085 0.10]);
 G.A18.Toolbar.Visible = 'off';
@@ -229,7 +229,7 @@ G.A22.Toolbar.Visible = 'off';
 G.A23 = axes('Units', 'Normalized', 'Position', [0.74 0.155 0.085 0.10]);
 G.A23.Toolbar.Visible = 'off';
 % +4 PSD
-G.A24 = axes('Units', 'Normalized', 'Position', [0.845 0.155 0.085 0.10]);
+G.A24 = axes('Units', 'Normalized', 'Position', [0.84 0.155 0.085 0.10]);
 G.A24.Toolbar.Visible = 'off';
 
 
@@ -852,9 +852,16 @@ message = 'Data loaded successfully';
 
         % Bins to display
         n         = (G.show -1)/2;
-        centerBin = G.index
-        centerBin_MinusOne = centerBin-1
-        centerBin_PlusOne = centerBin+1
+        % PSD Bins
+        centerBin = G.index;
+        centerBin_MinusFour = centerBin-4;
+        centerBin_MinusThree = centerBin-3;
+        centerBin_MinusTwo = centerBin-2;
+        centerBin_MinusOne = centerBin-1;
+        centerBin_PlusOne = centerBin+1;
+        centerBin_PlusTwo = centerBin+2;
+        centerBin_PlusThree = centerBin+3;
+        centerBin_PlusFour = centerBin+4;
         binStart  = centerBin - n;
         binEnd    = centerBin + n;
         fprintf("Bin start is: %d and Bin End is: %d\n", binStart, binEnd);
@@ -932,14 +939,16 @@ message = 'Data loaded successfully';
 
         % % -------
         % We'll track min/max across all bins to standardize the y-scale
-        if centerBin_MinusOne == 0
+        if centerBin <=5
             centerBin_MinusOne = 1;
+            centerBin_MinusTwo = 1;
+            centerBin_MinusThree = 1;
+            centerBin_MinusFour = 1;
         end
         current_data_MO = getBinData(G, centerBin_MinusOne);
 
+
         [MOfreq, MOpsdVals] = computeBinPSD(current_data_MO, fs, windowSeconds, overlapPercent);
-        MOlocalMax = max(MOpsdVals);
-        MOlocalMin = min(MOpsdVals);
 
         MOmask = (MOfreq>= freqRange(1)) & (MOfreq <= freqRange(2));
         MOfreq = MOfreq(MOmask);
@@ -1002,6 +1011,612 @@ message = 'Data loaded successfully';
         legend(G.A20,'show');  % show each bin in the legend
         ylim(G.A20, [0, meanVal + 3*stdDev]);
         hold(G.A20, 'off');
+
+        % CurrentBin - 2
+        current_data_MT = getBinData(G, centerBin_MinusTwo);
+
+        [MTfreq, MTpsdVals] = computeBinPSD(current_data_MT, fs, windowSeconds, overlapPercent);
+
+        MTmask = (MTfreq>= freqRange(1)) & (MTfreq <= freqRange(2));
+        MTfreq = MTfreq(MTmask);
+        MTpsdVals = MTpsdVals(MTmask);
+        MTpsd_dB = MTpsdVals;
+        printBandMeans(MTfreq, MTpsd_dB);
+        MTpsd_dB = MTpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(MTfreq), 3);  % each row = RGB
+        for i = 1:length(MTfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (MTfreq >= range(1)) & (MTfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(MTpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        MTb = bar(G.A19, MTfreq, MTpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_MinusTwo));
+
+        % Assign the color map
+        MTb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A19, freqRange);
+        grid(G.A19,'on');
+        legend(G.A19,'show');  % show each bin in the legend
+        ylim(G.A19, [0, meanVal + 3*stdDev]);
+        hold(G.A19, 'off');
+
+
+          % CurrentBin - 3
+        current_data_MTH = getBinData(G, centerBin_MinusThree);
+
+        [MTHfreq, MTHpsdVals] = computeBinPSD(current_data_MTH, fs, windowSeconds, overlapPercent);
+
+        MTHmask = (MTHfreq>= freqRange(1)) & (MTHfreq <= freqRange(2));
+        MTHfreq = MTHfreq(MTHmask);
+        MTHpsdVals = MTHpsdVals(MTHmask);
+        MTHpsd_dB = MTHpsdVals;
+        printBandMeans(MTHfreq, MTHpsd_dB);
+        MTHpsd_dB = MTHpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(MTHfreq), 3);  % each row = RGB
+        for i = 1:length(MTHfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (MTHfreq >= range(1)) & (MTHfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(MTHpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        MTHb = bar(G.A18, MTHfreq, MTHpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_MinusThree));
+
+        % Assign the color map
+        MTHb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A18, freqRange);
+        grid(G.A18,'on');
+        legend(G.A18,'show');  % show each bin in the legend
+        ylim(G.A18, [0, meanVal + 3*stdDev]);
+        hold(G.A18, 'off');
+
+
+        % CurrentBin - 4
+        current_data_MF = getBinData(G, centerBin_MinusFour);
+
+        [MFfreq, MFpsdVals] = computeBinPSD(current_data_MF, fs, windowSeconds, overlapPercent);
+
+        MFmask = (MFfreq>= freqRange(1)) & (MFfreq <= freqRange(2));
+        MFfreq = MFfreq(MFmask);
+        MFpsdVals = MFpsdVals(MFmask);
+        MFpsd_dB = MFpsdVals;
+        printBandMeans(MFfreq, MFpsd_dB);
+        MFpsd_dB = MFpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(MFfreq), 3);  % each row = RGB
+        for i = 1:length(MFfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (MFfreq >= range(1)) & (MFfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(MFpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        MFb = bar(G.A17, MFfreq, MFpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
+
+        % Assign the color map
+        MFb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A17, freqRange);
+        grid(G.A17,'on');
+        legend(G.A17,'show');  % show each bin in the legend
+        ylim(G.A17, [0, meanVal + 3*stdDev]);
+        hold(G.A17, 'off');
+
+        % CurrentBin + 1
+        current_data_PO = getBinData(G, centerBin_PlusOne);
+
+        [POfreq, POpsdVals] = computeBinPSD(current_data_PO, fs, windowSeconds, overlapPercent);
+
+        POmask = (POfreq>= freqRange(1)) & (POfreq <= freqRange(2));
+        POfreq = POfreq(POmask);
+        POpsdVals = POpsdVals(POmask);
+        POpsd_dB = POpsdVals;
+        printBandMeans(POfreq, POpsd_dB);
+        POpsd_dB = POpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(POfreq), 3);  % each row = RGB
+        for i = 1:length(POfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (POfreq >= range(1)) & (POfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(POpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        POb = bar(G.A21, POfreq, POpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
+
+        % Assign the color map
+        POb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A21, freqRange);
+        grid(G.A21,'on');
+        legend(G.A21,'show');  % show each bin in the legend
+        ylim(G.A21, [0, meanVal + 3*stdDev]);
+        hold(G.A21, 'off');
+
+        % CurrentBin +2
+        current_data_MF = getBinData(G, centerBin_MinusFour);
+
+        [MFfreq, MFpsdVals] = computeBinPSD(current_data_MF, fs, windowSeconds, overlapPercent);
+
+        MFmask = (MFfreq>= freqRange(1)) & (MFfreq <= freqRange(2));
+        MFfreq = MFfreq(MFmask);
+        MFpsdVals = MFpsdVals(MFmask);
+        MFpsd_dB = MFpsdVals;
+        printBandMeans(MFfreq, MFpsd_dB);
+        MFpsd_dB = MFpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(MFfreq), 3);  % each row = RGB
+        for i = 1:length(MFfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (MFfreq >= range(1)) & (MFfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(MFpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        MFb = bar(G.A17, MFfreq, MFpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
+
+        % Assign the color map
+        MFb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A17, freqRange);
+        grid(G.A17,'on');
+        legend(G.A17,'show');  % show each bin in the legend
+        ylim(G.A17, [0, meanVal + 3*stdDev]);
+        hold(G.A17, 'off');
+
+        % CurrentBin + 1
+        current_data_PO = getBinData(G, centerBin_PlusOne);
+
+        [POfreq, POpsdVals] = computeBinPSD(current_data_PO, fs, windowSeconds, overlapPercent);
+
+        POmask = (POfreq>= freqRange(1)) & (POfreq <= freqRange(2));
+        POfreq = POfreq(POmask);
+        POpsdVals = POpsdVals(POmask);
+        POpsd_dB = POpsdVals;
+        printBandMeans(POfreq, POpsd_dB);
+        POpsd_dB = POpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(POfreq), 3);  % each row = RGB
+        for i = 1:length(POfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (POfreq >= range(1)) & (POfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(POpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        POb = bar(G.A21, POfreq, POpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
+
+        % Assign the color map
+        POb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A21, freqRange);
+        grid(G.A21,'on');
+        legend(G.A21,'show');  % show each bin in the legend
+        ylim(G.A21, [0, meanVal + 3*stdDev]);
+        hold(G.A21, 'off');
+
+                % CurrentBin +2
+        current_data_PT = getBinData(G, centerBin_PlusTwo);
+
+        [PTfreq, PTpsdVals] = computeBinPSD(current_data_PT, fs, windowSeconds, overlapPercent);
+
+        PTmask = (PTfreq>= freqRange(1)) & (PTfreq <= freqRange(2));
+        PTfreq = PTfreq(PTmask);
+        PTpsdVals = PTpsdVals(PTmask);
+        PTpsd_dB = PTpsdVals;
+        printBandMeans(MFfreq, PTpsd_dB);
+        PTpsd_dB = PTpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(PTfreq), 3);  % each row = RGB
+        for i = 1:length(PTfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (PTfreq >= range(1)) & (PTfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(PTpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        PTb = bar(G.A22, PTfreq, PTpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_PlusTwo));
+
+        % Assign the color map
+        PTb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A22, freqRange);
+        grid(G.A22,'on');
+        legend(G.A22,'show');  % show each bin in the legend
+        ylim(G.A22, [0, meanVal + 3*stdDev]);
+        hold(G.A22, 'off');
+
+        % CurrentBin + 3
+        current_data_PTH = getBinData(G, centerBin_PlusThree);
+
+        [PTHfreq, PTHpsdVals] = computeBinPSD(current_data_PTH, fs, windowSeconds, overlapPercent);
+
+        PTHmask = (PTHfreq>= freqRange(1)) & (PTHfreq <= freqRange(2));
+        PTHfreq = PTHfreq(PTHmask);
+        PTHpsdVals = PTHpsdVals(PTHmask);
+        PTHpsd_dB = PTHpsdVals;
+        printBandMeans(PTHfreq, PTHpsd_dB);
+        PTHpsd_dB = PTHpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(PTHfreq), 3);  % each row = RGB
+        for i = 1:length(PTHfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (POfreq >= range(1)) & (POfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(PTHpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        PTHb = bar(G.A23, PTHfreq, PTHpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_PlusThree));
+
+        % Assign the color map
+        PTHb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A23, freqRange);
+        grid(G.A23,'on');
+        legend(G.A23,'show');  % show each bin in the legend
+        ylim(G.A23, [0, meanVal + 3*stdDev]);
+        hold(G.A23, 'off');
+
+
+                % CurrentBin + 4
+        current_data_PF = getBinData(G, centerBin_PlusFour);
+
+        [PFfreq, PFpsdVals] = computeBinPSD(current_data_PF, fs, windowSeconds, overlapPercent);
+
+        PFmask = (PFfreq>= freqRange(1)) & (PFfreq <= freqRange(2));
+        PFfreq = PFfreq(PFmask);
+        PFpsdVals = PFpsdVals(PFmask);
+        PFpsd_dB = PFpsdVals;
+        printBandMeans(PFfreq, PFpsd_dB);
+        PFpsd_dB = PFpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(PFfreq), 3);  % each row = RGB
+        for i = 1:length(PFfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (PFfreq >= range(1)) & (PFfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(PFpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        PFb = bar(G.A24, PFfreq, PFpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_PlusFour));
+
+        % Assign the color map
+        PFb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A24, freqRange);
+        grid(G.A24,'on');
+        legend(G.A24,'show');  % show each bin in the legend
+        ylim(G.A24, [0, meanVal + 3*stdDev]);
+        hold(G.A24, 'off');
 
         % for binIdx = binStart : binEnd
         %     % 2) Extract data for this bin
