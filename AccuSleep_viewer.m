@@ -152,54 +152,96 @@ hold(G.A5,'on');
 set(G.A5,'Box','off','XLim',[0 1],'YLim',[0 0.1],'XTick',[],'YTick',[],'Clipping','off')
 G.A5.Toolbar.Visible = 'off';
 
-% EEG spectrogram
-G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.92 0.87 0.065]);
+% EEG
+% spectrogram
+G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.935 0.87 0.06]);
 G.A3.Toolbar.Visible = 'off';
 set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
 ylabel(G.A3, 'Spec.');
 
+% Upper time point indicator
+G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.92  0.87 0.015],'XTick',[],'YTick',[]);
+G.A8.Toolbar.Visible = 'off';
+
+% Upper sleep stage labels
+G.A1 = axes('Units', 'Normalized', 'Position', [0.05 0.865 0.87 0.05]);
+G.A1.Toolbar.Visible = 'off';
+
 % EEG signal - 1 Minute
-G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.82, 0.87 .09]);
+G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.78, 0.87 .09]);
 G.A6a.Toolbar.Visible = 'off';
-ylabel(G.A6a, 'EEG1');
+ylabel(G.A6a, 'EEG-1');
 set(G.A6a,'XTick',[])
 
 % % EMG signal - 1 Minute
-G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.72 0.87 .09]);
+G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.68 0.87 .09]);
 G.A7a.Toolbar.Visible = 'off';
-ylabel(G.A7a, 'EMG1');
+ylabel(G.A7a, 'EMG-1');
 set(G.A7a,'XTick',[])
 
 % EEG signal  - main
-G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.62 0.87 .09]);
+G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.585 0.87 .09]);
 G.A6.Toolbar.Visible = 'off';
-ylabel(G.A6, 'EEG2');
+ylabel(G.A6, 'EEG');
 
 % EMG signal  - main
-G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.50 0.87 .09]);
+G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.475 0.87 .09]);
 G.A7.Toolbar.Visible = 'off';
-ylabel(G.A7, 'EMG2');
+ylabel(G.A7, 'EMG');
 set(G.A7,'XTick',[])
 
 % EEG signal + 1 minute
-G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.40 0.87 .09]);
+G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.375 0.87 .09]);
 G.A6b.Toolbar.Visible = 'off';
-ylabel(G.A6b, 'EEG3');
+ylabel(G.A6b, 'EEG+1');
 set(G.A6b,'XTick',[])
 
 % EMG signal + 1 minute
-G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.30 0.87 .09]);
+G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.275 0.87 .09]);
 G.A7b.Toolbar.Visible = 'off';
-ylabel(G.A7b, 'EMG3');
+ylabel(G.A7b, 'EMG+1');
 set(G.A7b,'XTick',[])
 
+% Current PSD
+G.A10 = axes('Units', 'Normalized', 'Position', [0.44 0.155 0.085 0.10]);
+G.A10.Toolbar.Visible = 'off';
+
+
+% -4 PSD
+G.A18 = axes('Units', 'Normalized', 'Position', [0.05 0.155 0.085 0.10]);
+G.A18.Toolbar.Visible = 'off';
+% -3 PSD
+G.A18 = axes('Units', 'Normalized', 'Position', [0.145 0.155 0.085 0.10]);
+G.A18.Toolbar.Visible = 'off';
+% -2 PSD
+G.A19 = axes('Units', 'Normalized', 'Position', [0.24 0.155 0.085 0.10]);
+G.A19.Toolbar.Visible = 'off';
+% -1 PSD
+G.A20 = axes('Units', 'Normalized', 'Position', [0.34 0.155 0.085 0.10]);
+G.A20.Toolbar.Visible = 'off';
+% +1 PSD
+G.A21 = axes('Units', 'Normalized', 'Position', [0.54 0.155 0.085 0.10]);
+G.A21.Toolbar.Visible = 'off';
+% +2 PSD
+G.A22 = axes('Units', 'Normalized', 'Position', [0.645 0.155 0.085 0.10]);
+G.A22.Toolbar.Visible = 'off';
+% +3 PSD
+G.A23 = axes('Units', 'Normalized', 'Position', [0.74 0.155 0.085 0.10]);
+G.A23.Toolbar.Visible = 'off';
+% +4 PSD
+G.A24 = axes('Units', 'Normalized', 'Position', [0.845 0.155 0.085 0.10]);
+G.A24.Toolbar.Visible = 'off';
+
+
+% Lower sleep stage labels
+G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
 
 % Plot the EMG data (in volts)
 globalMin_EMG = min(G.EMG);
 globalMax_EMG = max(G.EMG);
 globalRange_EMG = globalMax_EMG - globalMin_EMG;
 padding_EMG = 0.02 * globalRange_EMG;
-fprintf('Global EMG Range = %.8f , %.8f \n', globalMax_EMG, globalMin_EMG);
+% fprintf('Global EMG Range = %.8f , %.8f \n', globalMax_EMG, globalMin_EMG);
 stableMin_EMG = globalMin_EMG - padding_EMG;
 stableMax_EMG = globalMax_EMG + padding_EMG;
 % --- In updatePlots, apply the stable EEG axis limits ---
@@ -208,19 +250,14 @@ set(G.A7a, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 
 
-% Lower sleep stage labels
-G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
 
-% Upper time point indicator
-G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.905  0.87 0.015],'XTick',[],'YTick',[]);
-G.A8.Toolbar.Visible = 'off';
 
 % --- Compute Global EMG Limits (in volts) ---
 globalMin_EEG = min(G.EEG);
 globalMax_EEG = max(G.EEG);
 globalRange_EEG = globalMax_EEG - globalMin_EEG;
 padding_EEG = 0.02 * globalRange_EEG;
-fprintf('Global EEG Range = %.8f , %.8f \n', globalMax_EEG, globalMin_EEG);
+% fprintf('Global EEG Range = %.8f , %.8f \n', globalMax_EEG, globalMin_EEG);
 
 stableMin_EEG = globalMin_EEG - padding_EEG;
 stableMax_EEG = globalMax_EEG + padding_EEG;
@@ -230,7 +267,7 @@ set(G.A6, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 set(G.A6a, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 set(G.A6b, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 
-linkaxes([G.A3, G.A8], 'x'); % upper panel x axes should stay linked
+linkaxes([G.A1,G.A3, G.A8], 'x'); % upper panel x axes should stay linked
 
 % buttons
 G.helpbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[1 .8 .8],...
@@ -306,8 +343,6 @@ G.lims = xlim(G.A3); % store maximum x limits for the upper panel plots
 set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
 
-G.A10 = axes('Units', 'Normalized', 'Position', [0.3 0.135 0.4 0.12]);
-G.A15.Toolbar.Visible = 'off';
 
 updateState;
 
@@ -317,7 +352,12 @@ updateState;
 [totalfreq, totalpsdVals] = computeBinPSD(G.EEG, G.SR, 4, 0.9);
 meanVal = mean(totalpsdVals);
 stdDev = std(totalpsdVals);
+
 ylim(G.A10, [0, meanVal + 3*stdDev]);
+ylim(G.A20, [0, meanVal + 3*stdDev]);
+ylim(G.A21, [0, meanVal + 3*stdDev]);
+
+
 % fprintf("Total PSD Vals: %s \n %s",min(totalpsdVals), max(totalpsdVals))
 % Plot everything else
 updatePlots;
@@ -688,29 +728,19 @@ message = 'Data loaded successfully';
 
     function updateState() % update the sleep stage image
 
-
+        li=xlim(G.A1);
+        cla(G.A1);
+        hold(G.A1, 'on');
+        box(G.A1,'on');
+        ylim(G.A1,[0 1]);
+        ylim(G.A1,[.5 3.5]);
+        xlim(G.A1,li) % make sure x limits are correct
+        set(G.A1,'XLimMode','manual','YLimMode','manual');
+        imagesc(G.A1,G.specTh,[1 2 3],makeSleepStageImage(G.labels),[0 6]);
+        colormap(G.A1,G.colors);
+        set(G.A1, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'Rem', 'Wake', 'NREM'});
     end
     function integralSignal = computeSignalIntegral(signal, fs, options)
-        % COMPUTESIGNALINTEGRAL Computes the integral of a signal (e.g., EEG or EMG)
-        %   integralSignal = computeSignalIntegral(signal, fs, options) integrates
-        %   the input signal over time using numerical integration.
-        %
-        %   Inputs:
-        %   - signal: Vector of signal values (e.g., EEG or EMG samples, [nSamples x 1])
-        %   - fs: Sampling frequency in Hz (e.g., 256 for 256 Hz sampling)
-        %   - options: Optional structure with fields:
-        %       - 'baselineCorrect': Logical (true/false, default false) to remove mean before integration
-        %       - 'normalize': Logical (true/false, default false) to normalize the integral by time
-        %       - 'method': String ('trapz' or 'cumsum', default 'trapz') for integration method
-        %
-        %   Output:
-        %   - integralSignal: Vector of the same length as signal, representing the integral
-        %
-        %   Example:
-        %   signal = randn(1000, 1);  % Example EEG/EMG signal
-        %   fs = 256;  % Sampling frequency
-        %   integral = computeSignalIntegral(signal, fs, struct('baselineCorrect', true));
-
         % Default options
         if nargin < 3 || isempty(options)
             options.baselineCorrect = false;
@@ -807,7 +837,7 @@ message = 'Data loaded successfully';
 
 
         % Print the mean power in the 0-4 Hz band
-        fprintf('Mean power in 0-4 Hz: %.10f dB\n', meanPower_0_4Hz);
+        % fprintf('Mean power in 0-4 Hz: %.10f dB\n', meanPower_0_4Hz);
     end
     function showAllEpochsPSD(G)
         % 1) Clear G.A10 and hold on
@@ -822,9 +852,12 @@ message = 'Data loaded successfully';
 
         % Bins to display
         n         = (G.show -1)/2;
-        centerBin = G.index;
+        centerBin = G.index
+        centerBin_MinusOne = centerBin-1
+        centerBin_PlusOne = centerBin+1
         binStart  = centerBin - n;
         binEnd    = centerBin + n;
+        fprintf("Bin start is: %d and Bin End is: %d\n", binStart, binEnd);
 
         % We'll track min/max across all bins to standardize the y-scale
         current_data = getBinData(G, centerBin);
@@ -889,12 +922,87 @@ message = 'Data loaded successfully';
         b.CData = cMap;
         % 9) Axis labeling
         xlabel(G.A10, 'Frequency (Hz)');
-        ylabel(G.A10, 'Power');
         xlim(G.A10, freqRange);
         grid(G.A10,'on');
         legend(G.A10,'show');  % show each bin in the legend
 
         hold(G.A10, 'off');
+
+
+
+        % % -------
+        % We'll track min/max across all bins to standardize the y-scale
+        if centerBin_MinusOne == 0
+            centerBin_MinusOne = 1;
+        end
+        current_data_MO = getBinData(G, centerBin_MinusOne);
+
+        [MOfreq, MOpsdVals] = computeBinPSD(current_data_MO, fs, windowSeconds, overlapPercent);
+        MOlocalMax = max(MOpsdVals);
+        MOlocalMin = min(MOpsdVals);
+
+        MOmask = (MOfreq>= freqRange(1)) & (MOfreq <= freqRange(2));
+        MOfreq = MOfreq(MOmask);
+        MOpsdVals = MOpsdVals(MOmask);
+        MOpsd_dB = MOpsdVals;
+        printBandMeans(MOfreq, MOpsd_dB);
+        MOpsd_dB = MOpsdVals;
+        % 6) Color-code each frequency point in freq by 4 bands:
+        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+        cMap = zeros(length(MOfreq), 3);  % each row = RGB
+        for i = 1:length(MOfreq)
+            f = freq(i);
+            if f >= 0  && f <= 4
+                cMap(i,:) = [1, 0, 0];      % red
+            elseif f > 4  && f <= 9
+                cMap(i,:) = [0, 0, 1];      % blue
+            elseif f > 9 && f <= 15
+                cMap(i,:) = [0, 1, 0];      % green
+            else
+                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+            end
+        end
+
+        % Define frequency bands and corresponding colors
+        bands = {
+            [0, 4],      [1 0 0];      % red for 0–4 Hz
+            [5, 9],      [0 0 1];      % blue for 5–9 Hz
+            [10, 15],    [0 1 0];      % green for 10–15 Hz
+            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
+        };
+
+        nBands = size(bands, 1);
+        bandMeans = zeros(1, nBands);
+
+        % Calculate the mean PSD (in dB) for each frequency band
+        for b = 1:nBands
+            range = bands{b, 1};
+            idx = (MOfreq >= range(1)) & (MOfreq <= range(2));
+            if any(idx)
+                bandMeans(b) = mean(MOpsd_dB(idx));
+            else
+                bandMeans(b) = NaN;  % or 0 if you prefer
+            end
+        end
+
+        % 7) Create a bar chart for this bin's PSD
+        %    "FaceColor=flat" means we can assign colors via CData.
+        %    "FaceAlpha=0.3" for partial transparency.
+        MOb = bar(G.A20, MOfreq, MOpsd_dB, 1, ...
+                'EdgeColor','none', ...
+                'FaceColor','flat', ...
+                'FaceAlpha',0.3, ...
+                'DisplayName', sprintf('Epoch# %d', centerBin_MinusOne));
+
+        % Assign the color map
+        MOb.CData = cMap;
+        % 9) Axis labeling
+        xlim(G.A20, freqRange);
+        grid(G.A20,'on');
+        legend(G.A20,'show');  % show each bin in the legend
+        ylim(G.A20, [0, meanVal + 3*stdDev]);
+        hold(G.A20, 'off');
+
         % for binIdx = binStart : binEnd
         %     % 2) Extract data for this bin
         %     data = getBinData(G, binIdx);
@@ -977,7 +1085,6 @@ message = 'Data loaded successfully';
         %
         % % 9) Axis labeling
         % xlabel(G.A10, 'Frequency (Hz)');
-        % ylabel(G.A10, 'Power');
         % xlim(G.A10, freqRange);
         % grid(G.A10,'on');
         % legend(G.A10,'show');  % show each bin in the legend
@@ -1034,9 +1141,26 @@ message = 'Data loaded successfully';
 
         [psdVals, freq] = pwelch(data, hann(wlen), noverlap, wlen, fs);
     end
+    function [im] = makeSleepStageImage(state) % create the image to show
+        % in the top sleep stage panel
+        im = zeros(3,length(state));
+        for i = 1:3
+            im(i,:) = (state==i).*i;
+            im(i,state==4) = 4;
+        end
+    end
 % Process keypresses
     function keypress(~, evt)
-
+        if ~isfield(G, 'keyPressCount')
+            G.keyPressCount = 0;
+        end
+        % Increment the counter
+        G.keyPressCount = G.keyPressCount + 1;
+        % Check if it's time to save
+        if G.keyPressCount == 30
+            saveFile();
+            G.keyPressCount = 0;
+        end
         switch evt.Key
             case {'rightarrow', 'uparrow'} % advance one time step
                 if G.index < G.nbins
@@ -1530,8 +1654,8 @@ end
             msgbox('Error: labels variable must be numeric')
             return
         end
-        if ~isempty(setdiff(unique(x.labels), 1:4)) % in the range 1:4
-            msgbox('Error: labels variable must be in the range 1:4')
+        if ~isempty(setdiff(unique(x.labels), 1:6)) % in the range 1:4
+            msgbox('Error: labels variable must be in the range 1:6')
             return
         end
         if length(size(x.labels)) > 2 || min(size(x.labels)) >  1 % should be a vector
