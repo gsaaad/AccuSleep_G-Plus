@@ -142,7 +142,7 @@ end
 %% Make the figure window
 
 WIN = figure('Units', 'Normalized', 'CloseRequestFcn',@closeReq,...
-    'Position', [0.08, 0.12, 0.83, 0.75],'KeyPressFcn',@keypress,...
+    'Position', [0, 0, 1, 1],'KeyPressFcn',@keypress,...
     'Menubar', 'none','Color', 'w', 'Name', 'AccuSleep_viewer');
 
 % create axes
@@ -154,17 +154,17 @@ G.A5.Toolbar.Visible = 'off';
 
 % EEG
 % spectrogram
-G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.935 0.87 0.06]);
+G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.95 0.87 0.045]);
 G.A3.Toolbar.Visible = 'off';
 set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
 ylabel(G.A3, 'Spec.');
 
 % Upper time point indicator
-G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.92  0.87 0.015],'XTick',[],'YTick',[]);
+G.A8 = axes('Units', 'Normalized', 'Position', [0.05 0.935  0.87 0.015],'XTick',[],'YTick',[]);
 G.A8.Toolbar.Visible = 'off';
 
 % Upper sleep stage labels
-G.A1 = axes('Units', 'Normalized', 'Position', [0.05 0.865 0.87 0.05]);
+G.A1 = axes('Units', 'Normalized', 'Position', [0.05 0.88 0.87 0.05]);
 G.A1.Toolbar.Visible = 'off';
 
 % EEG signal - 1 Minute
@@ -203,38 +203,38 @@ ylabel(G.A7b, 'EMG+1');
 set(G.A7b,'XTick',[])
 
 % Current PSD
-G.A10 = axes('Units', 'Normalized', 'Position', [0.44 0.155 0.085 0.10]);
+G.A10 = axes('Units', 'Normalized', 'Position', [0.44 0.155 0.085 0.09]);
 G.A10.Toolbar.Visible = 'off';
 
 
 % -4 PSD
-G.A17 = axes('Units', 'Normalized', 'Position', [0.05 0.155 0.085 0.10]);
+G.A17 = axes('Units', 'Normalized', 'Position', [0.05 0.155 0.085 0.09]);
 G.A17.Toolbar.Visible = 'off';
 % -3 PSD
-G.A18 = axes('Units', 'Normalized', 'Position', [0.145 0.155 0.085 0.10]);
+G.A18 = axes('Units', 'Normalized', 'Position', [0.145 0.155 0.085 0.09]);
 G.A18.Toolbar.Visible = 'off';
 % -2 PSD
-G.A19 = axes('Units', 'Normalized', 'Position', [0.24 0.155 0.085 0.10]);
+G.A19 = axes('Units', 'Normalized', 'Position', [0.24 0.155 0.085 0.09]);
 G.A19.Toolbar.Visible = 'off';
 % -1 PSD
-G.A20 = axes('Units', 'Normalized', 'Position', [0.34 0.155 0.085 0.10]);
+G.A20 = axes('Units', 'Normalized', 'Position', [0.34 0.155 0.085 0.09]);
 G.A20.Toolbar.Visible = 'off';
 % +1 PSD
-G.A21 = axes('Units', 'Normalized', 'Position', [0.54 0.155 0.085 0.10]);
+G.A21 = axes('Units', 'Normalized', 'Position', [0.54 0.155 0.085 0.09]);
 G.A21.Toolbar.Visible = 'off';
 % +2 PSD
-G.A22 = axes('Units', 'Normalized', 'Position', [0.645 0.155 0.085 0.10]);
+G.A22 = axes('Units', 'Normalized', 'Position', [0.645 0.155 0.085 0.09]);
 G.A22.Toolbar.Visible = 'off';
 % +3 PSD
-G.A23 = axes('Units', 'Normalized', 'Position', [0.74 0.155 0.085 0.10]);
+G.A23 = axes('Units', 'Normalized', 'Position', [0.74 0.155 0.085 0.09]);
 G.A23.Toolbar.Visible = 'off';
 % +4 PSD
-G.A24 = axes('Units', 'Normalized', 'Position', [0.84 0.155 0.085 0.10]);
+G.A24 = axes('Units', 'Normalized', 'Position', [0.84 0.155 0.085 0.09]);
 G.A24.Toolbar.Visible = 'off';
 
 
 % Lower sleep stage labels
-G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.1]);
+G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.09]);
 
 % Plot the EMG data (in volts)
 globalMin_EMG = min(G.EMG);
@@ -271,10 +271,10 @@ linkaxes([G.A1,G.A3, G.A8], 'x'); % upper panel x axes should stay linked
 
 % buttons
 G.helpbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[1 .8 .8],...
-    'Position',[.93 .01 .062 .055],'String','Help','Callback',@showHelp,'FontSize',9,...
+    'Position',[.93 .01 .062 .04],'String','Help','Callback',@showHelp,'FontSize',9,...
     'ToolTip','Show help menu (H)');
 G.savebtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[.8 1 .8],...
-    'Position',[.93 .07 .062 .045],'String','Save labels','Callback',@saveCallback,'FontSize',9,...
+    'Position',[.93 .07 .062 .04],'String','Save labels','Callback',@saveCallback,'FontSize',9,...
     'ToolTip','Save labels to file (F)');
 G.loadbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
     'Position',[.93 .12 .062 .03],'String','Load labels','Callback',@loadFile,'FontSize',9,...
@@ -314,10 +314,10 @@ G.showMenu = uicontrol(WIN,'Style','popupmenu','Units','normalized',...
     'String',{'1 epoch','3 epochs','5 epochs','7 epochs','9 epochs','15 epochs'},...
     'Value',6);
 
-G.meanDelta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+G.sumDelta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .24 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
-G.meanTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+G.sumTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .20 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.thetaRatio = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
@@ -353,9 +353,7 @@ updateState;
 meanVal = mean(totalpsdVals);
 stdDev = std(totalpsdVals);
 
-ylim(G.A10, [0, meanVal + 3*stdDev]);
-ylim(G.A20, [0, meanVal + 3*stdDev]);
-ylim(G.A21, [0, meanVal + 3*stdDev]);
+ylim(G.A20, [0, meanVal + 6*stdDev]);
 
 
 % fprintf("Total PSD Vals: %s \n %s",min(totalpsdVals), max(totalpsdVals))
@@ -403,7 +401,7 @@ message = 'Data loaded successfully';
             end
         end
 
-        set(G.A9, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'Wake', 'NREM'});
+        set(G.A9, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'WAKE', 'NREM'});
 
         line(G.A9, [-0.5, -0.5], [0.5,1], 'Color','r','LineWidth',1);
         line(G.A9, [0.5, 0.5], [0.5,1], 'Color','r','LineWidth',1);
@@ -738,7 +736,7 @@ message = 'Data loaded successfully';
         set(G.A1,'XLimMode','manual','YLimMode','manual');
         imagesc(G.A1,G.specTh,[1 2 3],makeSleepStageImage(G.labels),[0 6]);
         colormap(G.A1,G.colors);
-        set(G.A1, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'Rem', 'Wake', 'NREM'});
+        set(G.A1, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'WAKE', 'NREM'});
     end
     function integralSignal = computeSignalIntegral(signal, fs, options)
         % Default options
@@ -795,7 +793,7 @@ message = 'Data loaded successfully';
         fprintf('Integral computed with %d samples, fs = %d Hz.\n', nSamples, fs);
     end
 
-    function printBandMeans(freq, psd_dB)
+    function CalculateBandSums(freq, psd_dB)
         % Define frequency bands and a corresponding label (for printing)
         bands = {
             [0, 4],      'Red';    % 0-4 Hz => red
@@ -825,14 +823,15 @@ message = 'Data loaded successfully';
         % end
 
         % Calculate the mean power in the 0-4 Hz band
-        meanPower_0_4Hz = sum(psd_dB(freq >= 0 & freq <= 4));
-        meanPower_5_9Hz = sum(psd_dB(freq >=5 & freq <=9));
-        tRatio = (meanPower_5_9Hz-meanPower_0_4Hz)/meanPower_0_4Hz;
+        sumPower_0_4Hz = sum(psd_dB(freq >= 0 & freq <= 4));
+        sumPower_5_9Hz = sum(psd_dB(freq >=5 & freq <=9));
+        tRatio = sumPower_5_9Hz/sumPower_0_4Hz;
 
+        % Scientific notiation with .2e
         % Update the text box
-        set(G.meanDelta, 'String', sprintf('Delta: %.10f ', meanPower_0_4Hz));
-        set(G.meanTheta, 'String', sprintf('Theta: %.10f ', meanPower_5_9Hz));
-        set(G.thetaRatio, 'String', sprintf('Theta Ratio: %.3f ', tRatio));
+        set(G.sumDelta, 'String', sprintf('Delta: %.2e ', sumPower_0_4Hz));
+        set(G.sumTheta, 'String', sprintf('Theta: %.2e ', sumPower_5_9Hz));
+        set(G.thetaRatio, 'String', sprintf('Theta Ratio: %.2f ', tRatio));
 
 
 
@@ -862,21 +861,19 @@ message = 'Data loaded successfully';
         centerBin_PlusTwo = centerBin+2;
         centerBin_PlusThree = centerBin+3;
         centerBin_PlusFour = centerBin+4;
-        binStart  = centerBin - n;
-        binEnd    = centerBin + n;
-        fprintf("Bin start is: %d and Bin End is: %d\n", binStart, binEnd);
+        % binStart  = centerBin - n;
+        % binEnd    = centerBin + n;
+        % fprintf("Bin start is: %d and Bin End is: %d\n", binStart, binEnd);
 
         % We'll track min/max across all bins to standardize the y-scale
         current_data = getBinData(G, centerBin);
         [freq, psdVals] = computeBinPSD(current_data, fs, windowSeconds, overlapPercent);
-        localMax = max(psdVals);
-        localMin = min(psdVals);
 
         mask = (freq>= freqRange(1)) & (freq <= freqRange(2));
         freq = freq(mask);
         psdVals = psdVals(mask);
         psd_dB = psdVals;
-        printBandMeans(freq, psd_dB);
+        CalculateBandSums(freq, psd_dB);
         psd_dB = psdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -922,27 +919,44 @@ message = 'Data loaded successfully';
         b = bar(G.A10, freq, psd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin));
 
         % Assign the color map
         b.CData = cMap;
         % 9) Axis labeling
-        xlabel(G.A10, 'Frequency (Hz)');
+        % xlabel(G.A10, 'Frequency (Hz)');
         xlim(G.A10, freqRange);
         grid(G.A10,'on');
-        legend(G.A10,'show');  % show each bin in the legend
-
+        % legend(G.A10,'show');  % show each bin in the legend
+        ylim(G.A10, [0, meanVal + 6*stdDev]);
+        set(G.A10, 'YTickLabel', []);
+        set(G.A10, 'XTickLabel', []);
         hold(G.A10, 'off');
 
 
 
         % % -------
         % We'll track min/max across all bins to standardize the y-scale
-        if centerBin <=5
+        if centerBin <=2
             centerBin_MinusOne = 1;
             centerBin_MinusTwo = 1;
             centerBin_MinusThree = 1;
+            centerBin_MinusFour = 1;
+        elseif centerBin ==3
+            centerBin_MinusOne = 2;
+            centerBin_MinusTwo = 1;
+            centerBin_MinusThree = 1;
+            centerBin_MinusFour = 1;
+        elseif centerBin == 4
+            centerBin_MinusOne = 3;
+            centerBin_MinusTwo = 2;
+            centerBin_MinusThree = 1;
+            centerBin_MinusFour = 1;
+        elseif centerBin == 5
+            centerBin_MinusOne = 4;
+            centerBin_MinusTwo = 3;
+            centerBin_MinusThree = 2;
             centerBin_MinusFour = 1;
         end
         current_data_MO = getBinData(G, centerBin_MinusOne);
@@ -954,7 +968,7 @@ message = 'Data loaded successfully';
         MOfreq = MOfreq(MOmask);
         MOpsdVals = MOpsdVals(MOmask);
         MOpsd_dB = MOpsdVals;
-        printBandMeans(MOfreq, MOpsd_dB);
+        CalculateBandSums(MOfreq, MOpsd_dB);
         MOpsd_dB = MOpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1000,16 +1014,18 @@ message = 'Data loaded successfully';
         MOb = bar(G.A20, MOfreq, MOpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_MinusOne));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusOne));
 
         % Assign the color map
         MOb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A20, freqRange);
         grid(G.A20,'on');
-        legend(G.A20,'show');  % show each bin in the legend
-        ylim(G.A20, [0, meanVal + 3*stdDev]);
+        % legend(G.A20,'show');  % show each bin in the legend
+        ylim(G.A20, [0, meanVal + 6*stdDev]);
+        set(G.A20, 'YTickLabel', []);
+        set(G.A20, 'XTickLabel', []);
         hold(G.A20, 'off');
 
         % CurrentBin - 2
@@ -1021,7 +1037,7 @@ message = 'Data loaded successfully';
         MTfreq = MTfreq(MTmask);
         MTpsdVals = MTpsdVals(MTmask);
         MTpsd_dB = MTpsdVals;
-        printBandMeans(MTfreq, MTpsd_dB);
+        CalculateBandSums(MTfreq, MTpsd_dB);
         MTpsd_dB = MTpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1067,16 +1083,18 @@ message = 'Data loaded successfully';
         MTb = bar(G.A19, MTfreq, MTpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_MinusTwo));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusTwo));
 
         % Assign the color map
         MTb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A19, freqRange);
         grid(G.A19,'on');
-        legend(G.A19,'show');  % show each bin in the legend
-        ylim(G.A19, [0, meanVal + 3*stdDev]);
+        % legend(G.A19,'show');  % show each bin in the legend
+        ylim(G.A19, [0, meanVal + 6*stdDev]);
+        set(G.A19, 'YTickLabel', []);
+        set(G.A19, 'XTickLabel', []);
         hold(G.A19, 'off');
 
 
@@ -1089,7 +1107,7 @@ message = 'Data loaded successfully';
         MTHfreq = MTHfreq(MTHmask);
         MTHpsdVals = MTHpsdVals(MTHmask);
         MTHpsd_dB = MTHpsdVals;
-        printBandMeans(MTHfreq, MTHpsd_dB);
+        CalculateBandSums(MTHfreq, MTHpsd_dB);
         MTHpsd_dB = MTHpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1135,16 +1153,18 @@ message = 'Data loaded successfully';
         MTHb = bar(G.A18, MTHfreq, MTHpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_MinusThree));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusThree));
 
         % Assign the color map
         MTHb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A18, freqRange);
         grid(G.A18,'on');
-        legend(G.A18,'show');  % show each bin in the legend
-        ylim(G.A18, [0, meanVal + 3*stdDev]);
+        % legend(G.A18,'show');  % show each bin in the legend
+        ylim(G.A18, [0, meanVal + 6*stdDev]);
+        set(G.A18, 'YTickLabel', []);
+        set(G.A18, 'XTickLabel', []);
         hold(G.A18, 'off');
 
 
@@ -1157,7 +1177,7 @@ message = 'Data loaded successfully';
         MFfreq = MFfreq(MFmask);
         MFpsdVals = MFpsdVals(MFmask);
         MFpsd_dB = MFpsdVals;
-        printBandMeans(MFfreq, MFpsd_dB);
+        CalculateBandSums(MFfreq, MFpsd_dB);
         MFpsd_dB = MFpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1203,16 +1223,16 @@ message = 'Data loaded successfully';
         MFb = bar(G.A17, MFfreq, MFpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
 
         % Assign the color map
         MFb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A17, freqRange);
         grid(G.A17,'on');
-        legend(G.A17,'show');  % show each bin in the legend
-        ylim(G.A17, [0, meanVal + 3*stdDev]);
+        % legend(G.A17,'show');  % show each bin in the legend
+        ylim(G.A17, [0, meanVal + 6*stdDev]);
         hold(G.A17, 'off');
 
         % CurrentBin + 1
@@ -1224,7 +1244,7 @@ message = 'Data loaded successfully';
         POfreq = POfreq(POmask);
         POpsdVals = POpsdVals(POmask);
         POpsd_dB = POpsdVals;
-        printBandMeans(POfreq, POpsd_dB);
+        CalculateBandSums(POfreq, POpsd_dB);
         POpsd_dB = POpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1270,16 +1290,18 @@ message = 'Data loaded successfully';
         POb = bar(G.A21, POfreq, POpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
 
         % Assign the color map
         POb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A21, freqRange);
         grid(G.A21,'on');
-        legend(G.A21,'show');  % show each bin in the legend
-        ylim(G.A21, [0, meanVal + 3*stdDev]);
+        % legend(G.A21,'show');  % show each bin in the legend
+        ylim(G.A21, [0, meanVal + 6*stdDev]);
+        set(G.A21, 'YTickLabel', []);
+        set(G.A21, 'XTickLabel', []);
         hold(G.A21, 'off');
 
         % CurrentBin +2
@@ -1291,7 +1313,7 @@ message = 'Data loaded successfully';
         MFfreq = MFfreq(MFmask);
         MFpsdVals = MFpsdVals(MFmask);
         MFpsd_dB = MFpsdVals;
-        printBandMeans(MFfreq, MFpsd_dB);
+        CalculateBandSums(MFfreq, MFpsd_dB);
         MFpsd_dB = MFpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1337,17 +1359,18 @@ message = 'Data loaded successfully';
         MFb = bar(G.A17, MFfreq, MFpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
 
         % Assign the color map
         MFb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A17, freqRange);
         grid(G.A17,'on');
-        legend(G.A17,'show');  % show each bin in the legend
-        ylim(G.A17, [0, meanVal + 3*stdDev]);
+        % legend(G.A17,'show');  % show each bin in the legend
+        ylim(G.A17, [0, meanVal + 6*stdDev]);
         hold(G.A17, 'off');
+        xlabel(G.A17, 'Frequency (Hz)');
 
         % CurrentBin + 1
         current_data_PO = getBinData(G, centerBin_PlusOne);
@@ -1358,7 +1381,7 @@ message = 'Data loaded successfully';
         POfreq = POfreq(POmask);
         POpsdVals = POpsdVals(POmask);
         POpsd_dB = POpsdVals;
-        printBandMeans(POfreq, POpsd_dB);
+        CalculateBandSums(POfreq, POpsd_dB);
         POpsd_dB = POpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1404,16 +1427,18 @@ message = 'Data loaded successfully';
         POb = bar(G.A21, POfreq, POpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
 
         % Assign the color map
         POb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A21, freqRange);
         grid(G.A21,'on');
-        legend(G.A21,'show');  % show each bin in the legend
-        ylim(G.A21, [0, meanVal + 3*stdDev]);
+        % legend(G.A21,'show');  % show each bin in the legend
+        ylim(G.A21, [0, meanVal + 6*stdDev]);
+        set(G.A21, 'YTickLabel', []);
+        set(G.A21, 'XTickLabel', []);
         hold(G.A21, 'off');
 
                 % CurrentBin +2
@@ -1425,7 +1450,7 @@ message = 'Data loaded successfully';
         PTfreq = PTfreq(PTmask);
         PTpsdVals = PTpsdVals(PTmask);
         PTpsd_dB = PTpsdVals;
-        printBandMeans(MFfreq, PTpsd_dB);
+        CalculateBandSums(MFfreq, PTpsd_dB);
         PTpsd_dB = PTpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1471,16 +1496,18 @@ message = 'Data loaded successfully';
         PTb = bar(G.A22, PTfreq, PTpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_PlusTwo));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusTwo));
 
         % Assign the color map
         PTb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A22, freqRange);
         grid(G.A22,'on');
-        legend(G.A22,'show');  % show each bin in the legend
-        ylim(G.A22, [0, meanVal + 3*stdDev]);
+        % legend(G.A22,'show');  % show each bin in the legend
+        ylim(G.A22, [0, meanVal + 6*stdDev]);
+        set(G.A22, 'YTickLabel', []);
+        set(G.A22, 'XTickLabel', []);
         hold(G.A22, 'off');
 
         % CurrentBin + 3
@@ -1492,7 +1519,7 @@ message = 'Data loaded successfully';
         PTHfreq = PTHfreq(PTHmask);
         PTHpsdVals = PTHpsdVals(PTHmask);
         PTHpsd_dB = PTHpsdVals;
-        printBandMeans(PTHfreq, PTHpsd_dB);
+        CalculateBandSums(PTHfreq, PTHpsd_dB);
         PTHpsd_dB = PTHpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1538,16 +1565,18 @@ message = 'Data loaded successfully';
         PTHb = bar(G.A23, PTHfreq, PTHpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_PlusThree));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusThree));
 
         % Assign the color map
         PTHb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A23, freqRange);
         grid(G.A23,'on');
-        legend(G.A23,'show');  % show each bin in the legend
-        ylim(G.A23, [0, meanVal + 3*stdDev]);
+        % legend(G.A23,'show');  % show each bin in the legend
+        ylim(G.A23, [0, meanVal + 6*stdDev]);
+        set(G.A23, 'YTickLabel', []);
+        set(G.A23, 'XTickLabel', []);
         hold(G.A23, 'off');
 
 
@@ -1560,7 +1589,7 @@ message = 'Data loaded successfully';
         PFfreq = PFfreq(PFmask);
         PFpsdVals = PFpsdVals(PFmask);
         PFpsd_dB = PFpsdVals;
-        printBandMeans(PFfreq, PFpsd_dB);
+        CalculateBandSums(PFfreq, PFpsd_dB);
         PFpsd_dB = PFpsdVals;
         % 6) Color-code each frequency point in freq by 4 bands:
         %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
@@ -1606,16 +1635,18 @@ message = 'Data loaded successfully';
         PFb = bar(G.A24, PFfreq, PFpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
-                'FaceAlpha',0.3, ...
-                'DisplayName', sprintf('Epoch# %d', centerBin_PlusFour));
+                'FaceAlpha',0.3);
+                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusFour));
 
         % Assign the color map
         PFb.CData = cMap;
         % 9) Axis labeling
         xlim(G.A24, freqRange);
         grid(G.A24,'on');
-        legend(G.A24,'show');  % show each bin in the legend
-        ylim(G.A24, [0, meanVal + 3*stdDev]);
+        % legend(G.A24,'show');  % show each bin in the legend
+        ylim(G.A24, [0, meanVal + 6*stdDev]);
+        set(G.A24, 'YTickLabel', []);
+        set(G.A24, 'XTickLabel', []);
         hold(G.A24, 'off');
 
         % for binIdx = binStart : binEnd
@@ -1643,7 +1674,7 @@ message = 'Data loaded successfully';
         %     % 5) Convert to dB if desired
         %     % psd_dB = 10 * log10(psdVals);
         %     psd_dB = psdVals;
-        %     printBandMeans(freq, psd_dB);
+        %     CalculateBandSums(freq, psd_dB);
         %     psd_dB = psdVals;
         %
         %     % 6) Color-code each frequency point in freq by 4 bands:
@@ -1771,8 +1802,12 @@ message = 'Data loaded successfully';
         end
         % Increment the counter
         G.keyPressCount = G.keyPressCount + 1;
-        % Check if it's time to save
-        if G.keyPressCount == 30
+        % Check if it's time to save file - 30 minutes is 450 keystrokes
+        % 4 seconds x 15 = 60 [1 minute]
+        % 15 * 30 = 450 keystrokes
+
+
+        if G.keyPressCount == 450
             saveFile();
             G.keyPressCount = 0;
         end
@@ -1933,7 +1968,7 @@ message = 'Data loaded successfully';
 
                 [label,~] = listdlg('PromptString','Set label to:',...
                     'SelectionMode','single',...
-                    'ListString',{'REM', 'Wake','NREM','Undefined'});
+                    'ListString',{'REM', 'WAKE','NREM','Undefined'});
                 if isempty(label) % no label selected
                     delete(t);
                     return
