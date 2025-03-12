@@ -4,7 +4,7 @@ function varargout = AccuSleep_GUI(varargin)
 % To see the user manual, run this code and press the user manual button, or run:
 % doc AccuSleep_instructions
 
-% First, check that all required toolboxes are installed, and that MATLAB 
+% First, check that all required toolboxes are installed, and that MATLAB
 % is at least version 2017b
 toolboxes = {'nnet','stats','signal','images'};
 installed = zeros(1,5);
@@ -105,7 +105,7 @@ text(handles.axes1,.51,.496,'AccuSleep','FontSize',43,'Rotation',90,'Color',[.68
     'HorizontalAlignment','center')
 text(handles.axes1,.49,.504,'AccuSleep','FontSize',43,'Rotation',90,'Color',[.17 .26 .62],...
     'HorizontalAlignment','center')
-    
+
 % clear all fields
 set(handles.recbox,'String',{'Recording 1'});
 set(handles.recbox,'Value',1);
@@ -119,15 +119,14 @@ set(handles.netTxt,'String','');
 set(handles.boutBox,'String','5');
 set(handles.overwriteBox,'Value',0);
 set(handles.console,'String',{})
-set(handles.viewerTypeBox, 'String', 'Use Updated Viewer');
-set(handles.viewerTypeBox, 'Value', 0);
+
 
 % --- Outputs from this function are returned to the command line.
 function varargout = AccuSleep_GUI_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 % selects file with EEG data
-function eegBtn_Callback(hObject, eventdata, handles) 
+function eegBtn_Callback(hObject, eventdata, handles)
 % choose default location to look for EEG file
 currentEEGpath = get(handles.eegTxt,'String');
 currentEMGpath = get(handles.emgTxt,'String');
@@ -159,7 +158,7 @@ if ~isempty(EEGvar) % if we found a variable named 'EEG'
     % check that it's the right shape, and is numeric
     numericClasses = {'int8', 'uint8', 'int16', 'uint16', ...
         'int32', 'uint32', 'int64', 'uint64','double','single'};
-    
+
     if (length(EEGvar.size)>2 || min(EEGvar.size)~=1) || ...
             ~any(strcmp(EEGvar.class, numericClasses))
         disptext(handles, 'ERROR: EEG variable must be a numeric 1D matrix');
@@ -175,7 +174,7 @@ if ~isempty(EEGvar) % if we found a variable named 'EEG'
     rec.EEGlen = max(EEGvar.size);
     rec.EEGpath = [path,file];
     rec.indicators{1} = 'success';
-    
+
     disptext(handles, 'EEG file selected');
     % check if EEG/EMG are the same length
     if ~isempty(get(handles.emgTxt,'String')) % if EMG file has been selected
@@ -198,7 +197,7 @@ lockInputs(handles,0); % unlock the inputs
 updateDisplay(handles); % update the display
 
 % selects EMG data file
-function emgBtn_Callback(hObject, eventdata, handles) 
+function emgBtn_Callback(hObject, eventdata, handles)
 currentEEGpath = get(handles.eegTxt,'String');
 currentEMGpath = get(handles.emgTxt,'String');
 if isempty(currentEMGpath) && ~isempty(currentEEGpath)
@@ -212,7 +211,7 @@ if ~ischar(file)
     return
 end
 
-lockInputs(handles,1); 
+lockInputs(handles,1);
 idx = handles.recbox.Value; % get currently selected recording
 allRecordings = getappdata(handles.D,'recordings'); % get all the recordings
 rec = allRecordings{idx}; % just get info for current recording
@@ -228,7 +227,7 @@ if ~isempty(EMGvar) % if we found a variable named 'EMG'
     % check that it's the right shape, and is numeric
     numericClasses = {'int8', 'uint8', 'int16', 'uint16', ...
         'int32', 'uint32', 'int64', 'uint64','double','single'};
-    
+
     if (length(EMGvar.size)>2 || min(EMGvar.size)~=1) || ...
             ~any(strcmp(EMGvar.class, numericClasses))
         disptext(handles, 'ERROR: EMG variable must be a numeric 1D matrix');
@@ -244,7 +243,7 @@ if ~isempty(EMGvar) % if we found a variable named 'EMG'
     rec.EMGlen = max(EMGvar.size);
     rec.EMGpath = [path,file];
     rec.indicators{2} = 'success';
-    
+
     disptext(handles, 'EMG file selected');
     if ~isempty(get(handles.eegTxt,'String'))
         if rec.EEGlen ~= rec.EMGlen
@@ -356,31 +355,23 @@ codes=animateBoxes([ind{1}(2), ind{2}(2),ind{3}(2),ind{4}(2),ind{5}(2)], 1);
 eegFile = load(allRecordings{idx}.EEGpath,'EEG');
 emgFile = load(allRecordings{idx}.EMGpath,'EMG');
 
-viewerVal = get(handles.viewerTypeBox,'Value'); 
-if viewerVal == 1
-    % If checked => use AccuSleep_viewer2
-    message = AccuSleep_viewer(eegFile.EEG, emgFile.EMG, ...
-        str2num(get(handles.srBox,'String')), ...
-        str2num(get(handles.tsBox,'String')), ...
-        labels, selectedFile);
-else
-    % If unchecked => use original AccuSleep_viewer
-    message = AccuSleep_viewer_OG(eegFile.EEG, emgFile.EMG, ...
-        str2num(get(handles.srBox,'String')), ...
-        str2num(get(handles.tsBox,'String')), ...
-        labels, selectedFile);
-end
+
+
+message = AccuSleep_viewer(eegFile.EEG, emgFile.EMG, ...
+    str2num(get(handles.srBox,'String')), ...
+    str2num(get(handles.tsBox,'String')), ...
+    labels, selectedFile);
 
 % Display any returned message text
 disptext(handles, message);
 
 % complete animation
 animateBoxes([ind{1}(2), ind{2}(2),ind{3}(2),ind{4}(2),ind{5}(2)], 2, codes);
-lockInputs(handles,0); 
+lockInputs(handles,0);
 
 
 % sets calibration file path
-function calibBtn_Callback(hObject, eventdata, handles) 
+function calibBtn_Callback(hObject, eventdata, handles)
 [file,path] = uigetfile('*.mat','Select .mat file containing "calibrationData" variable',...
     get(handles.calibTxt,'String')); % get user input
 if ischar(file) % if something was selected
@@ -403,7 +394,7 @@ end
 
 
 % sets path to the trained network file
-function netFile_Callback(hObject, eventdata, handles) 
+function netFile_Callback(hObject, eventdata, handles)
 [file,path] = uigetfile(...
     '*.mat','Select .mat file containing "net" variable (the trained network)',...
     get(handles.netTxt,'String')); % get user input
@@ -434,7 +425,7 @@ rec = allRecordings{idx}; % the currently considered recording
 
 % make sure we have the files we need
 if checkMissingEntries(handles, 0, 0)
-    lockInputs(handles,0); 
+    lockInputs(handles,0);
     return
 end
 
@@ -540,7 +531,7 @@ lockInputs(handles,0);
 
 
 % classify sleep stages automatically
-function runBtn_Callback(hObject, eventdata, handles) 
+function runBtn_Callback(hObject, eventdata, handles)
 lockInputs(handles,1); % lock the inputs
 
 % check that all boxes are filled
@@ -550,7 +541,7 @@ if checkMissingEntries(handles, 1, 1)
 end
 
 % When the minimum bout length is much longer than the epoch length, this
-% creates ambiguity that can make the scoring somewhat unreliable. 
+% creates ambiguity that can make the scoring somewhat unreliable.
 % get minimum bout length
 minBoutLen = str2num(get(handles.boutBox,'String'));
 if isempty(minBoutLen)
@@ -603,11 +594,11 @@ for i = 1:length(allRecordings)
         setappdata(handles.console,'text',t);
         drawnow;
     end
-    
+
     % load the EEG/EMG data
     eegFile = load(allRecordings{i}.EEGpath,'EEG');
     emgFile = load(allRecordings{i}.EMGpath,'EMG');
-    
+
     % run AccuSleep_classify on the recording
     newLabels{i} = AccuSleep_classify(standardizeSR(eegFile.EEG, oldSR, 128),...
         standardizeSR(emgFile.EMG, oldSR, 128),...
@@ -671,10 +662,10 @@ for i = 1:length(allRecordings)
     end
     % save labels to file
     labels = newLabels{i};
-    save(allRecordings{i}.labelpath, 'labels'); 
+    save(allRecordings{i}.labelpath, 'labels');
 end
-disptext(handles, 'Finished scoring recordings.'); 
-lockInputs(handles,0); 
+disptext(handles, 'Finished scoring recordings.');
+lockInputs(handles,0);
 
 
 % check if anything is missing before classification
@@ -742,7 +733,7 @@ for i = idx1:idx2 % for all recordings (or just one)
             currentList{i}]);
         return
     end
-    
+
     if checkAllFields == 1 % if we need to check other fields, too
         if isempty(handles.calibTxt.String)
             animateBoxes(getappdata(handles.D,'calibIndicators'),0);
@@ -858,19 +849,7 @@ end
 
 
 
-function viewerTypeBox_Callback(hObject, eventdata, handles)
-    % hObject is the checkbox
-    val = get(hObject, 'Value');  % 0 or 1
-    
-    % For example, if checked => an alternative viewer, else => classic
-    if val == 1
-        setappdata(handles.D, 'viewerType', 'alternative');
-    else
-        setappdata(handles.D, 'viewerType', 'classic');
-    end
-    
-    % Optionally update the GUI or show a message
-    disp(['Viewer checkbox changed. Now using: ', getappdata(handles.D,'viewerType')]);
+
 
 % whether to overwrite existing (not undefined) sleep stage labels after classification
 function overwriteBox_Callback(hObject, eventdata, handles)
@@ -1065,10 +1044,3 @@ else
 end
 
 
-% --- Executes on button press in viewerTypeBox.
-function checkbox6_Callback(hObject, eventdata, handles)
-% hObject    handle to viewerTypeBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of viewerTypeBox
