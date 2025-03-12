@@ -274,10 +274,10 @@ G.helpbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','Background
     'Position',[.93 .01 .062 .04],'String','Help','Callback',@showHelp,'FontSize',9,...
     'ToolTip','Show help menu (H)');
 G.savebtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[.8 1 .8],...
-    'Position',[.93 .07 .062 .04],'String','Save labels','Callback',@saveCallback,'FontSize',9,...
+    'Position',[.93 .055 .062 .04],'String','Save labels','Callback',@saveCallback,'FontSize',9,...
     'ToolTip','Save labels to file (F)');
 G.loadbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
-    'Position',[.93 .12 .062 .03],'String','Load labels','Callback',@loadFile,'FontSize',9,...
+    'Position',[.93 .10 .062 .03],'String','Load labels','Callback',@loadFile,'FontSize',9,...
     'ToolTip','Load labels from file');
 G.brightbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized',...
     'Position',[.93 .88 .062 .025],'String','Brighter','Callback',@brightSpect,...
@@ -315,19 +315,19 @@ G.showMenu = uicontrol(WIN,'Style','popupmenu','Units','normalized',...
     'Value',6);
 
 G.sumDelta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-    'Position', [.925 .24 .07 .035], 'String', '', ...
+    'Position', [.925 .18 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.sumTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-    'Position', [.925 .20 .07 .035], 'String', '', ...
+    'Position', [.925 .16 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.thetaRatio = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-    'Position', [.925 .16 .07 .035], 'String', '', ...
+    'Position', [.925 .14 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.eegIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .32 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 G.emgIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-    'Position', [.925 .28 .07 .035], 'String', '', ...
+    'Position', [.925 .32 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 % keep track of the current timepoint
 G.index = 1; % index of current time point
@@ -428,7 +428,7 @@ message = 'Data loaded successfully';
         padding_EMG = 0.02 * yr_EMG;
 
         % set emgIntegral
-        % set(G.emgIntegral, 'String', sprintf('EMG Integral: %.10f ', curEMGIntegral));
+        % set(G.emgIntegral, 'String', sprintf('EMG Integral: %.2f ', curEMGIntegral));
 
 
         if yr_EMG < eps
@@ -738,61 +738,72 @@ message = 'Data loaded successfully';
         colormap(G.A1,G.colors);
         set(G.A1, 'XTickLabel', [],'XTick',[], 'YTick', [1 2 3], 'YTickLabel', {'REM', 'WAKE', 'NREM'});
     end
-    function integralSignal = computeSignalIntegral(signal, fs, options)
-        % Default options
-        if nargin < 3 || isempty(options)
-            options.baselineCorrect = false;
-            options.normalize = false;
-            options.method = 'trapz';
-        end
-
-        % Ensure signal is a column vector
+    % function integralSignal = computeSignalIntegral(signal, fs, options)
+    %     % Default options
+    %     if nargin < 3 || isempty(options)
+    %         options.baselineCorrect = false;
+    %         options.normalize = false;
+    %         options.method = 'trapz';
+    %     end
+    %
+    %     % Ensure signal is a column vector
+    %     if isrow(signal)
+    %         signal = signal';
+    %     end
+    %
+    %     % Get number of samples
+    %     nSamples = length(signal);
+    %
+    %     % Create time vector (in seconds)
+    %     t = (0:nSamples-1) / fs;
+    %
+    %     % Baseline correction (remove mean if requested)
+    %     if options.baselineCorrect
+    %         signal = signal - mean(signal);
+    %         fprintf('Signal baseline corrected (mean removed).\n');
+    %     end
+    %
+    %     % Compute integral based on method
+    %     switch lower(options.method)
+    %         case 'trapz'
+    %             % Use trapezoidal numerical integration (MATLAB's trapz)
+    %             integralSignal = trapz(t, signal);
+    %             % Reshape to match signal length for cumulative effect
+    %             integralSignal = cumsum(signal) * (t(2) - t(1)); % Scale by time step
+    %         case 'cumsum'
+    %             % Use cumulative sum (simpler but less accurate for non-uniform data)
+    %             dt = 1 / fs;  % Time step
+    %             integralSignal = cumsum(signal) * dt;
+    %         otherwise
+    %             error('Unsupported integration method. Use ''trapz'' or ''cumsum''.');
+    %     end
+    %
+    %     % Normalize by total time if requested
+    %     if options.normalize
+    %         totalTime = t(end) - t(1);
+    %         integralSignal = integralSignal / totalTime;
+    %         fprintf('Integral normalized by total time (%f seconds).\n', totalTime);
+    %     end
+    %
+    %     % Ensure output is a column vector
+    %     if isrow(integralSignal)
+    %         integralSignal = integralSignal';
+    %     end
+    %
+    %     fprintf('Integral computed with %d samples, fs = %d Hz.\n', nSamples, fs);
+    % end
+    function integralSignal = computeSignalIntegral(signal, fs)
+        % Ensure the signal is a column vector
         if isrow(signal)
             signal = signal';
         end
 
-        % Get number of samples
-        nSamples = length(signal);
+        % Calculate the time step based on sampling frequency
+        dt = 1 / fs;
 
-        % Create time vector (in seconds)
-        t = (0:nSamples-1) / fs;
-
-        % Baseline correction (remove mean if requested)
-        if options.baselineCorrect
-            signal = signal - mean(signal);
-            fprintf('Signal baseline corrected (mean removed).\n');
-        end
-
-        % Compute integral based on method
-        switch lower(options.method)
-            case 'trapz'
-                % Use trapezoidal numerical integration (MATLAB's trapz)
-                integralSignal = trapz(t, signal);
-                % Reshape to match signal length for cumulative effect
-                integralSignal = cumsum(signal) * (t(2) - t(1)); % Scale by time step
-            case 'cumsum'
-                % Use cumulative sum (simpler but less accurate for non-uniform data)
-                dt = 1 / fs;  % Time step
-                integralSignal = cumsum(signal) * dt;
-            otherwise
-                error('Unsupported integration method. Use ''trapz'' or ''cumsum''.');
-        end
-
-        % Normalize by total time if requested
-        if options.normalize
-            totalTime = t(end) - t(1);
-            integralSignal = integralSignal / totalTime;
-            fprintf('Integral normalized by total time (%f seconds).\n', totalTime);
-        end
-
-        % Ensure output is a column vector
-        if isrow(integralSignal)
-            integralSignal = integralSignal';
-        end
-
-        fprintf('Integral computed with %d samples, fs = %d Hz.\n', nSamples, fs);
+        % Compute the cumulative integral using the cumulative sum
+        integralSignal = cumsum(signal) * dt;
     end
-
     function CalculateBandSums(freq, psd_dB)
         % Define frequency bands and a corresponding label (for printing)
         bands = {
