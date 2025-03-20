@@ -27,7 +27,6 @@ function [message] = AccuSleep_viewer(EEG, EMG, SR, epochLen, userLabels, savepa
 
 %% Check the inputs
 G =     struct; % holds everything
-
 % make sure we have at least 3 arguments
 switch nargin
     case {0,1,2,3}
@@ -55,41 +54,85 @@ switch nargin
         end
 end
 
+% VARIABLES/CONSTANTS
+TARGET_SAMPLE_RATE = 256;
+
+% EEG LOWPASS VALUE
+EEG_LOW_PASS_CUTOFF = 25;
+
+% EMG BANDPASS VALUES
+EMG_LOW_BANDPASS_CUTOFF = 25;
+EMG_HIGH_BANDPASS_CUTOFF = 50;
+
+%EEG & EMG Y-LIM Multiplier
+YLIM_MULTIPLIER = 2.2;
+
+% SPECTROGRAM - SHOW VALUES UP TO 21Hz
+SPECTROGRAM_CUTOFF = 21;
+
+% Welch analysis parameters
+windowSeconds  = 4;      % window length for Welch
+overlapPercent = 0.9;    % 90% overlap
+freqRange      = [0 20]; % show 0-20 Hz
+
+% Default # Bins to show (15-1)/2 = 7 bins on each side [+ current bin]
+DEFAULT_SHOW = 15;
+
+
+
+% PSD - DELTA - RED, THETA - BLUE, ALPHA - GREEN, ELSE - GRAY
+DELTA_COLOR = [1, 0, 0];
+THETA_COLOR = [0, 0, 1];
+ALPHA_COLOR = [0, 1, 0];
+ELSE_COLOR = [0.5, 0.5, 0.5];
+
+PADDING = 0.02;
+
+LABEL_STAGE_ALL_COLOR = [1 1 1; .47 .67 .19; .14 .2 .57; 0.996 0.758 0.039; 0.25 0.45 0.05; 0.05 0.15 0.50;0.85 0.65 0.03];
+WHITE = LABEL_STAGE_ALL_COLOR(1, :); %BACKGROUND
+GREEN = LABEL_STAGE_ALL_COLOR(2, :); %REM
+BLUE = LABEL_STAGE_ALL_COLOR(3, :); %WAKE
+YELLOW = LABEL_STAGE_ALL_COLOR(4, :); %NREM
+DARK_GREEN = LABEL_STAGE_ALL_COLOR(5, :); %REM-Artifact
+DARK_BLUE = LABEL_STAGE_ALL_COLOR(6, :); %WAKE_Artifact
+DARK_YELLOW = LABEL_STAGE_ALL_COLOR(7, :); %NREM_Artifact
+
+% Compute Target Sample Rate, and epoch Length
 G.originalSR = SR; % EEG/EMG sampling rate
-G.SR = 256; % sampling rate used when calculating spectrogram and processed EMG
-G.epochLen  = epochLen; % length of one epoch (spectrogram column) in seconds
+G.SR = TARGET_SAMPLE_RATE; % sampling rate used when calculating spectrogram and processed EMG
+G.epochLen = epochLen; % length of one epoch (spectrogram column) in seconds
 
 if length(EEG) ~= length(EMG)
     message = 'ERROR: EEG and EMG are different lengths';
     return
 end
 
-% Filter the EEG and EMG data
-EEG = lowpass(EEG, 25, SR);
-%EEG = bandpass(EEG,[.3 25], SR);
-EMG = bandpass(EMG,[25 50], SR);
+% Filter EEG, EMG data - Low pass -> EEG, bandpass -> EMG
+EEG = lowpass(EEG, EEG_LOW_PASS_CUTOFF, SR);
+EMG = bandpass(EMG,[EMG_LOW_BANDPASS_CUTOFF EMG_HIGH_BANDPASS_CUTOFF], SR);
 
 G.EEG = EEG - mean(EEG);
 G.EMG = EMG - mean(EMG);
 clear('EMG','EEG');
 
-% create spectrogram and process EMG at a standard SR (128)
+
+% create spectrogram and process EMG using G.SR == TARGET_SAMPLE_RATE
 [spec, tAxis, fAxis] = createSpectrogram(standardizeSR(G.EEG, G.originalSR, G.SR), G.SR, G.epochLen);
 G.processedEMG = processEMG(standardizeSR(G.EMG, G.originalSR, G.SR), G.SR, G.epochLen);
-% set ceiling for EMG trace at 2.5 SD when plotting
 G.cappedEMG = G.processedEMG;
 emgCap = mean(G.cappedEMG) + 3*std(G.cappedEMG);
 G.cappedEMG(G.cappedEMG > emgCap) = emgCap;
 
 % set various parameters
-G.show = 15; %  default number of bins to display on screen
+G.show = DEFAULT_SHOW; %  default number of bins to display on screen
 G.dt = 1/G.originalSR; % duration of each EEG/EMG sample in seconds
 G.advance = 1; % whether to advance automatically when a state is assigned
-G.colors = [1 1 1; .47 .67 .19; .14 .2 .57; 0.996 0.758 0.039; 0.25 0.45 0.05; 0.05 0.15 0.50;0.85 0.65 0.03]; %colors for sleep stages
+G.colors = [WHITE;GREEN;BLUE;YELLOW;DARK_GREEN;DARK_BLUE;DARK_YELLOW]; %colors for sleep stages
 G.mid = ceil(G.show/2); % important for plotting the current time marker - middle of G.show
 G.savepath = ''; % where to save the sleep stage labels
 G.nbins = length(tAxis); % total number of time bins in the recording
 G.unsavedChanges = 0; % whether anything has changed since user last saved
+fs = 1 / G.dt;  % sampling rate
 
 % check to make sure labels has the proper length
 if ~isempty(G.labels)
@@ -103,7 +146,7 @@ else % if no sleep stages provided, set to W*
 end
 
 % get spectrogram and time axes
-showFreqs = find(fAxis <= 21); % only show frequencies under 25 Hz
+showFreqs = find(fAxis <= SPECTROGRAM_CUTOFF); % only show frequencies under 21 Hz
 G.specTs = (1:G.nbins)*G.epochLen - G.epochLen/2; % spectrogram time axis, in seconds
 G.specTh = G.specTs./3600; % spectrogram time axis, in hours
 G.spectrogram = spec(:,showFreqs); % our EEG spectrogram
@@ -123,7 +166,7 @@ clear spec
 % figure out how to scale eeg and emg visually
 G.eegLen = length(G.EEG); % length of our recording, in samples
 yl = prctile(abs(G.EEG(1:10:end)),95);
-G.eegYlim = [-2.2*yl, 2.2*yl];
+G.eegYlim = [-YLIM_MULTIPLIER*yl, YLIM_MULTIPLIER*yl];
 G.emgYlim = G.eegYlim;
 
 % load our colormap
@@ -145,15 +188,8 @@ WIN = figure('Units', 'Normalized', 'CloseRequestFcn',@closeReq,...
     'Position', [0, 0, 1, 1],'KeyPressFcn',@keypress,...
     'Menubar', 'none','Color', 'w', 'Name', 'AccuSleep_viewer');
 
-% create axes
-% panel divider and y labels
-G.A5 = axes('Units', 'Normalized', 'Position', [0 .7 .05 .02],'XColor','w','YColor','w');
-hold(G.A5,'on');
-set(G.A5,'Box','off','XLim',[0 1],'YLim',[0 0.1],'XTick',[],'YTick',[],'Clipping','off')
-G.A5.Toolbar.Visible = 'off';
 
-% EEG
-% spectrogram
+% Spectrogram
 G.A3 = axes('Units', 'Normalized', 'Position', [0.05 0.95 0.87 0.045]);
 G.A3.Toolbar.Visible = 'off';
 set(gca, 'FontSize', 10, 'LineWidth', 2, 'XTick', [], 'YTick', []);
@@ -168,108 +204,99 @@ G.A1 = axes('Units', 'Normalized', 'Position', [0.05 0.88 0.87 0.05]);
 G.A1.Toolbar.Visible = 'off';
 
 % EEG signal - 1 Minute
-G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.78, 0.87 .09]);
+G.A6a = axes('Units', 'Normalized', 'Position', [0.05 0.775, 0.87 .09]);
 G.A6a.Toolbar.Visible = 'off';
 ylabel(G.A6a, 'EEG-1');
 set(G.A6a,'XTick',[])
 
 % % EMG signal - 1 Minute
-G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.68 0.87 .09]);
+G.A7a = axes('Units', 'Normalized', 'Position', [0.05 0.67 0.87 .09]);
 G.A7a.Toolbar.Visible = 'off';
 ylabel(G.A7a, 'EMG-1');
 set(G.A7a,'XTick',[])
 
 % EEG signal  - main
-G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.585 0.87 .09]);
+G.A6 = axes('Units', 'Normalized', 'Position', [0.05 0.565 0.87 .09]);
 G.A6.Toolbar.Visible = 'off';
 ylabel(G.A6, 'EEG');
 
 % EMG signal  - main
-G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.475 0.87 .09]);
+G.A7 = axes('Units', 'Normalized', 'Position', [0.05 0.445 0.87 .09]);
 G.A7.Toolbar.Visible = 'off';
 ylabel(G.A7, 'EMG');
 set(G.A7,'XTick',[])
 
 % EEG signal + 1 minute
-G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.375 0.87 .09]);
+G.A6b = axes('Units', 'Normalized', 'Position', [0.05 0.34 0.87 .09]);
 G.A6b.Toolbar.Visible = 'off';
 ylabel(G.A6b, 'EEG+1');
 set(G.A6b,'XTick',[])
 
 % EMG signal + 1 minute
-G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.275 0.87 .09]);
+G.A7b = axes('Units', 'Normalized', 'Position', [0.05 0.235 0.87 .09]);
 G.A7b.Toolbar.Visible = 'off';
 ylabel(G.A7b, 'EMG+1');
 set(G.A7b,'XTick',[])
 
-% Current PSD
-G.A10 = axes('Units', 'Normalized', 'Position', [0.44 0.155 0.085 0.09]);
-G.A10.Toolbar.Visible = 'off';
-
-
 % -4 PSD
-G.A17 = axes('Units', 'Normalized', 'Position', [0.05 0.155 0.085 0.09]);
+G.A17 = axes('Units', 'Normalized', 'Position', [0.05 0.13 0.085 0.09]);
 G.A17.Toolbar.Visible = 'off';
 % -3 PSD
-G.A18 = axes('Units', 'Normalized', 'Position', [0.145 0.155 0.085 0.09]);
+G.A18 = axes('Units', 'Normalized', 'Position', [0.145 0.13 0.085 0.09]);
 G.A18.Toolbar.Visible = 'off';
 % -2 PSD
-G.A19 = axes('Units', 'Normalized', 'Position', [0.24 0.155 0.085 0.09]);
+G.A19 = axes('Units', 'Normalized', 'Position', [0.24 0.13 0.085 0.09]);
 G.A19.Toolbar.Visible = 'off';
 % -1 PSD
-G.A20 = axes('Units', 'Normalized', 'Position', [0.34 0.155 0.085 0.09]);
+G.A20 = axes('Units', 'Normalized', 'Position', [0.34 0.13 0.085 0.09]);
 G.A20.Toolbar.Visible = 'off';
+% Current PSD - 0 PSD
+G.A10 = axes('Units', 'Normalized', 'Position', [0.44 0.13 0.085 0.09]);
+G.A10.Toolbar.Visible = 'off';
 % +1 PSD
-G.A21 = axes('Units', 'Normalized', 'Position', [0.54 0.155 0.085 0.09]);
+G.A21 = axes('Units', 'Normalized', 'Position', [0.54 0.13 0.085 0.09]);
 G.A21.Toolbar.Visible = 'off';
 % +2 PSD
-G.A22 = axes('Units', 'Normalized', 'Position', [0.645 0.155 0.085 0.09]);
+G.A22 = axes('Units', 'Normalized', 'Position', [0.645 0.13 0.085 0.09]);
 G.A22.Toolbar.Visible = 'off';
 % +3 PSD
-G.A23 = axes('Units', 'Normalized', 'Position', [0.74 0.155 0.085 0.09]);
+G.A23 = axes('Units', 'Normalized', 'Position', [0.74 0.13 0.085 0.09]);
 G.A23.Toolbar.Visible = 'off';
 % +4 PSD
-G.A24 = axes('Units', 'Normalized', 'Position', [0.84 0.155 0.085 0.09]);
+G.A24 = axes('Units', 'Normalized', 'Position', [0.84 0.13 0.085 0.09]);
 G.A24.Toolbar.Visible = 'off';
-
 
 % Lower sleep stage labels
 G.A9 = axes('Units', 'Normalized', 'Position', [0.05 0.01 0.87 0.09]);
 
-% Plot the EMG data (in volts)
-globalMin_EMG = min(G.EMG);
-globalMax_EMG = max(G.EMG);
-globalRange_EMG = globalMax_EMG - globalMin_EMG;
-padding_EMG = 0.02 * globalRange_EMG;
-% fprintf('Global EMG Range = %.8f , %.8f \n', globalMax_EMG, globalMin_EMG);
-stableMin_EMG = globalMin_EMG - padding_EMG;
-stableMax_EMG = globalMax_EMG + padding_EMG;
-% --- In updatePlots, apply the stable EEG axis limits ---
-set(G.A7, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
-set(G.A7a, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
-set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
 
-
-
-
-% --- Compute Global EMG Limits (in volts) ---
+% Plot the EEG data
 globalMin_EEG = min(G.EEG);
 globalMax_EEG = max(G.EEG);
 globalRange_EEG = globalMax_EEG - globalMin_EEG;
-padding_EEG = 0.02 * globalRange_EEG;
-% fprintf('Global EEG Range = %.8f , %.8f \n', globalMax_EEG, globalMin_EEG);
-
+padding_EEG = PADDING * globalRange_EEG;
 stableMin_EEG = globalMin_EEG - padding_EEG;
 stableMax_EEG = globalMax_EEG + padding_EEG;
-
 % --- In updatePlots, apply the stable EEG axis limits ---
 set(G.A6, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 set(G.A6a, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 set(G.A6b, 'YLim', [stableMin_EEG, stableMax_EEG], 'YLimMode', 'manual');
 
+% Plot the EMG data
+globalMin_EMG = min(G.EMG);
+globalMax_EMG = max(G.EMG);
+globalRange_EMG = globalMax_EMG - globalMin_EMG;
+padding_EMG = PADDING * globalRange_EMG;
+stableMin_EMG = globalMin_EMG - padding_EMG;
+stableMax_EMG = globalMax_EMG + padding_EMG;
+% --- In updatePlots, apply the stable EMG axis limits ---
+set(G.A7, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
+set(G.A7a, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
+set(G.A7b, 'YLim', [stableMin_EMG, stableMax_EMG], 'YLimMode', 'manual');
+
 linkaxes([G.A1,G.A3, G.A8], 'x'); % upper panel x axes should stay linked
 
-% buttons
+% Buttons
 G.helpbtn = uicontrol(WIN,'Style','pushbutton', 'Units','normalized','BackgroundColor',[1 .8 .8],...
     'Position',[.93 .01 .062 .04],'String','Help','Callback',@showHelp,'FontSize',9,...
     'ToolTip','Show help menu (H)');
@@ -313,7 +340,7 @@ G.showMenu = uicontrol(WIN,'Style','popupmenu','Units','normalized',...
     'Position',[0.93 0.75 0.062 0.02],'Callback', @fct_showmenu,...
     'String',{'1 epoch','3 epochs','5 epochs','7 epochs','9 epochs','15 epochs'},...
     'Value',6);
-
+% Text Boxes
 G.sumDelta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .18 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
@@ -323,40 +350,43 @@ G.sumTheta = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
 G.thetaRatio = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .14 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
-G.eegIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
-    'Position', [.925 .32 .07 .035], 'String', '', ...
-    'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
-G.emgIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+G.emgProcessed = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
     'Position', [.925 .32 .07 .035], 'String', '', ...
     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
 % keep track of the current timepoint
+% G.eegIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+%     'Position', [.925 .32 .07 .035], 'String', '', ...
+%     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+% G.emgIntegral = uicontrol(WIN, 'Style', 'text', 'Units', 'normalized', ...
+%     'Position', [.925 .32 .07 .035], 'String', '', ...
+%     'FontSize', 9, 'BackgroundColor', 'w', 'HorizontalAlignment', 'center');
+% keep track of the current timepoint
+
 G.index = 1; % index of current time point
 G.timepointS = G.specTs(G.index); % current time point, in seconds
 G.timepointH = G.specTh(G.index); % current time point, in hours
 
 % plot spectrogram
-caxis(G.A3,G.caxis1);
+clim(G.A3,G.caxis1);
 imagesc(G.A3,G.specTh, fAxis(showFreqs), G.spectrogram',G.caxis1);
 axis(G.A3, 'xy')
 colormap(G.A3,G.colormap);
-G.lims = xlim(G.A3); % store maximum x limits for the upper panel plots
+G.lims = xlim(G.A3);
 set(G.A3, 'YTick', 0:5:20, 'YTickLabel', 0:5:20);
 ylabel(G.A3, 'Spec.');
-
+set(G.A3, 'XTick', [], 'XTickLabel', [], 'XColor', 'none');
 
 updateState;
 
+% Compute EMG Integral
 % EMG_integral = computeSignalIntegral(G.processedEMG,G.SR);
 % G.EMG_Integral = EMG_integral;
 
-[totalfreq, totalpsdVals] = computeBinPSD(G.EEG, G.SR, 4, 0.9);
-meanVal = mean(totalpsdVals);
-stdDev = std(totalpsdVals);
 
-ylim(G.A20, [0, meanVal + 6*stdDev]);
+[~, totalpsdVals] = computeBinPSD(G.EEG, G.SR, 4, 0.9);
+PSD_Scale = max(totalpsdVals) * 1.35;
+ylim(G.A20, [0, PSD_Scale]);
 
-
-% fprintf("Total PSD Vals: %s \n %s",min(totalpsdVals), max(totalpsdVals))
 % Plot everything else
 updatePlots;
 
@@ -421,32 +451,20 @@ message = 'Data loaded successfully';
 
         % Compute dynamic y-axis limits from the current EMG window data (in volts)
         curEMG = G.EMG(ii);
+        % Get the EMG Integral of the current bin
         % curEMGIntegral = G.EMG_Integral(ii);
+        % curEMGProcessed = G.cappedEMG(ii);
         y_min_EMG = min(curEMG);
         y_max_EMG = max(curEMG);
         yr_EMG = y_max_EMG - y_min_EMG;
-        padding_EMG = 0.02 * yr_EMG;
+        padding_EMG = PADDING * yr_EMG;
 
-        % set emgIntegral
+        % Set the EMG integral to the text box
         % set(G.emgIntegral, 'String', sprintf('EMG Integral: %.2f ', curEMGIntegral));
-
-
-        if yr_EMG < eps
-            y_min_dyn_EMG = y_min_EMG - 0.1;
-            y_max_dyn_EMG = y_max_EMG + 0.1;
-        else
-            y_min_dyn_EMG = y_min_EMG - padding_EMG;
-            y_max_dyn_EMG = y_max_EMG + padding_EMG;
-        end
-
-        if y_min_dyn_EMG >= y_max_dyn_EMG
-            y_max_dyn_EMG = y_min_dyn_EMG + 0.1;
-        end
 
         line(G.A7, t, curEMG, 'Color', 'k', 'LineWidth', 1);
 
         currentYLim = get(G.A7, 'YLim');  % currentYLim = [bottom, top]
-        % Define an indicator height as a fraction of the current range
         indicatorHeight_EMG = 0.125 * diff(currentYLim);
 
         % Draw vertical lines at the left and right epoch boundaries, starting at the bottom (currentYLim(1))
@@ -465,22 +483,7 @@ message = 'Data loaded successfully';
         y_min_EEG = min(curEEG);
         y_max_EEG = max(curEEG);
         yr_EEG = y_max_EEG - y_min_EEG;
-        padding_EEG = 0.02 * yr_EEG;
-        % Compute the integral of the current EMG
-        % curEEG_integral = computeSignalIntegral(curEEG,G.SR);
-        % set(G.eegIntegral, 'String', sprintf('EEG Integral: %.10f ', curEEG_integral));
-        if yr_EEG < eps
-            y_min_dyn_EEG = y_min_EEG - 0.1;
-            y_max_dyn_EEG = y_max_EEG + 0.1;
-        else
-            y_min_dyn_EEG = y_min_EEG - padding_EEG;
-            y_max_dyn_EEG = y_max_EEG + padding_EEG;
-        end
-        if y_min_dyn_EEG >= y_max_dyn_EEG
-            y_max_dyn_EEG = y_min_dyn_EEG + 0.1;
-        end
-        % Apply the dynamic y-axis limits (still in volts)
-        % Plot the EEG data (in volts)
+        padding_EEG = PADDING * yr_EEG;
         line(G.A6, t, curEEG, 'Color','k', 'LineWidth', 1);
 
         % Draw vertical red lines at the left and right boundaries of the current epoch,
@@ -505,36 +508,6 @@ message = 'Data loaded successfully';
         end
         G.A6.XTickLabel = xlbl;
 
-        % Plot Progress Button
-        tp = G.timepointH; % time in seconds at the center of the screen
-        if G.index < G.mid
-            tp = gi*G.epochLen/3600-G.epochLen/3600/2;
-        end
-        if G.nbins - G.index < (G.mid-1)
-            tp = gi*G.epochLen/3600-G.epochLen/3600/2;
-        end
-
-        desiredNumTicks = 4;
-        tickPrecision = 1;
-        y_min_dyn_EEG_mV = y_min_dyn_EEG * 1000;
-        y_max_dyn_EEG_mV = y_max_dyn_EEG * 1000;
-        customTicks_EEG_mV = linspace(y_min_dyn_EEG_mV, y_max_dyn_EEG_mV, desiredNumTicks);
-        customTicks_EEG_mV(1) = round(y_min_dyn_EEG_mV, tickPrecision);
-        customTicks_EEG_mV(end) = round(y_max_dyn_EEG_mV, tickPrecision);
-        EEG_amp_min_mV = customTicks_EEG_mV(1) * 1000;
-        EEG_amp_max_mV = customTicks_EEG_mV(end) * 1000;
-        EEG_amplitudeStr = sprintf('%d to %d mV', EEG_amp_min_mV, EEG_amp_max_mV);
-        % set(G.EEG_ampDisplay, 'String', EEG_amplitudeStr);
-
-        if numel(unique(customTicks_EEG_mV)) < desiredNumTicks || any(diff(customTicks_EEG_mV) <= 0)
-            delta = (y_max_dyn_EEG_mV - y_min_dyn_EEG_mV) / (desiredNumTicks - 1);
-            customTicks_EEG_mV = y_min_dyn_EEG_mV : delta : y_max_dyn_EEG_mV;
-            if numel(customTicks_EEG_mV) ~= desiredNumTicks
-                customTicks_EEG_mV = linspace(y_min_dyn_EEG_mV, y_max_dyn_EEG_mV, desiredNumTicks);
-            end
-        end
-
-
         showAllEpochsPSD(G)
 
                 %% Plot EEG signal - Previous Minute in zoomineeg
@@ -557,20 +530,6 @@ message = 'Data loaded successfully';
 
             % Compute dynamic y-axis limits for previous EEG (in volts)
             curEEG_prev = G.EEG(ii_prev);
-            y_min_EEG_prev = min(curEEG_prev);
-            y_max_EEG_prev = max(curEEG_prev);
-            yr_EEG_prev = y_max_EEG_prev - y_min_EEG_prev;
-            padding_EEG_prev = 0.02 * yr_EEG_prev;
-            if yr_EEG_prev < eps
-                y_min_dyn_EEG_prev = y_min_EEG_prev - 0.1;
-                y_max_dyn_EEG_prev = y_max_EEG_prev + 0.1;
-            else
-                y_min_dyn_EEG_prev = y_min_EEG_prev - padding_EEG_prev;
-                y_max_dyn_EEG_prev = y_max_EEG_prev + padding_EEG_prev;
-            end
-            if y_min_dyn_EEG_prev >= y_max_dyn_EEG_prev
-                y_max_dyn_EEG_prev = y_min_dyn_EEG_prev + 0.1;
-            end
 
             % Plot the previous EEG data (in volts)
             line(G.A6a, t_prev, curEEG_prev, 'Color','k', 'LineWidth', 1);
@@ -582,20 +541,6 @@ message = 'Data loaded successfully';
 
             % Compute dynamic y-axis limits for previous EEG (in volts)
             curEMG_prev = G.EMG(ii_prev);
-            y_min_EMG_prev = min(curEMG_prev);
-            y_max_EMG_prev = max(curEMG_prev);
-            yr_EMG_prev = y_max_EMG_prev - y_min_EMG_prev;
-            padding_EMG_prev = 0.02 * yr_EMG_prev;
-            if yr_EMG_prev < eps
-                y_min_dyn_EMG_prev = y_min_EMG_prev - 0.1;
-                y_max_dyn_EMG_prev = y_max_EMG_prev + 0.1;
-            else
-                y_min_dyn_EMG_prev = y_min_EMG_prev - padding_EMG_prev;
-                y_max_dyn_EMG_prev = y_max_EMG_prev + padding_EMG_prev;
-            end
-            if y_min_dyn_EMG_prev >= y_max_dyn_EMG_prev
-                y_max_dyn_EMG_prev = y_min_dyn_EMG_prev + 0.1;
-            end
             % ylim(G.A7a, [y_min_dyn_EMG_prev, y_max_dyn_EMG_prev]);
             set(G.A7a, 'XLimMode','manual', 'YLimMode','manual');
 
@@ -626,22 +571,6 @@ message = 'Data loaded successfully';
 
             % Compute dynamic y-axis limits for the future EEG window (in volts)
             curEEG_future = G.EEG(ii_future);
-            y_min_EEG_future = min(curEEG_future);
-            y_max_EEG_future = max(curEEG_future);
-            yr_EEG_future = y_max_EEG_future - y_min_EEG_future;
-            padding_EEG_future = 0.02 * yr_EEG_future;
-
-            if yr_EEG_future < eps
-                y_min_dyn_EEG_future = y_min_EEG_future - 0.1;
-                y_max_dyn_EEG_future = y_max_EEG_future + 0.1;
-            else
-                y_min_dyn_EEG_future = y_min_EEG_future - padding_EEG_future;
-                y_max_dyn_EEG_future = y_max_EEG_future + padding_EEG_future;
-            end
-            if y_min_dyn_EEG_future >= y_max_dyn_EEG_future
-                y_max_dyn_EEG_future = y_min_dyn_EEG_future + 0.1;
-            end
-
 
             % Plot the future EEG data (in volts)
             line(G.A6b, t_future, curEEG_future, 'Color','k', 'LineWidth', 1);
@@ -653,22 +582,6 @@ message = 'Data loaded successfully';
 
             % Compute dynamic y-axis limits for the future EEG window (in volts)
             curEMG_future = G.EMG(ii_future);
-            y_min_EMG_future = min(curEMG_future);
-            y_max_EMG_future = max(curEMG_future);
-            yr_EMG_future = y_max_EMG_future - y_min_EMG_future;
-            padding_EMG_future = 0.02 * yr_EMG_future;
-
-            if yr_EMG_future < eps
-                y_min_dyn_EMG_future = y_min_EMG_future - 0.1;
-                y_max_dyn_EMG_future = y_max_EMG_future + 0.1;
-            else
-                y_min_dyn_EMG_future = y_min_EMG_future - padding_EMG_future;
-                y_max_dyn_EMG_future = y_max_EMG_future + padding_EMG_future;
-            end
-            if y_min_dyn_EMG_future >= y_max_dyn_EMG_future
-                y_max_dyn_EMG_future = y_min_dyn_EMG_future + 0.1;
-            end
-
 
             % Plot the future EEG data (in volts)
             line(G.A7b, t_future, curEMG_future, 'Color','k', 'LineWidth', 1);
@@ -792,25 +705,25 @@ message = 'Data loaded successfully';
     %
     %     fprintf('Integral computed with %d samples, fs = %d Hz.\n', nSamples, fs);
     % end
-    function integralSignal = computeSignalIntegral(signal, fs)
-        % Ensure the signal is a column vector
-        if isrow(signal)
-            signal = signal';
-        end
-
-        % Calculate the time step based on sampling frequency
-        dt = 1 / fs;
-
-        % Compute the cumulative integral using the cumulative sum
-        integralSignal = cumsum(signal) * dt;
-    end
+    % function integralSignal = computeSignalIntegral(signal, fs)
+    %     % Ensure the signal is a column vector
+    %     if isrow(signal)
+    %         signal = signal';
+    %     end
+    %
+    %     % Calculate the time step based on sampling frequency
+    %     dt = 1 / fs;
+    %
+    %     % Compute the cumulative integral using the cumulative sum
+    %     integralSignal = cumsum(signal) * dt;
+    % end
     function CalculateBandSums(freq, psd_dB)
         % Define frequency bands and a corresponding label (for printing)
         bands = {
-            [0, 4],      'Red';    % 0-4 Hz => red
-            [5, 9],      'Blue';   % 5-9 Hz => blue
-            [10, 15],    'Green';  % 10-15 Hz => green
-            [16, 20],    'Gray'    % 16-20 Hz => gray
+            [0, 4]
+            [5, 9]
+            [10, 15]
+            [16, 20]
         };
 
         nBands = size(bands, 1);
@@ -821,17 +734,12 @@ message = 'Data loaded successfully';
             range = bands{b, 1};
             idx = (freq >= range(1)) & (freq <= range(2));
             if any(idx)
-                bandMeans(b) = mean(psd_dB(idx));
+                bandMeans(b) = sum(psd_dB(idx));
             else
                 bandMeans(b) = NaN;
             end
         end
 
-        % Print the mean power for each band
-        % for b = 1:nBands
-        %     fprintf('Mean power in %d-%d Hz (%s): %.10f dB\n', ...
-        %         bands{b, 1}(1), bands{b, 1}(2), bands{b, 2}, bandMeans(b));
-        % end
 
         % Calculate the mean power in the 0-4 Hz band
         sumPower_0_4Hz = sum(psd_dB(freq >= 0 & freq <= 4));
@@ -844,336 +752,125 @@ message = 'Data loaded successfully';
         set(G.sumTheta, 'String', sprintf('Theta: %.2e ', sumPower_5_9Hz));
         set(G.thetaRatio, 'String', sprintf('Theta Ratio: %.2f ', tRatio));
 
-
-
         % Print the mean power in the 0-4 Hz band
-        % fprintf('Mean power in 0-4 Hz: %.10f dB\n', meanPower_0_4Hz);
+        fprintf('sum power in 0-4 Hz: %.10f dB\n', sumPower_0_4Hz);
+        fprintf('sum power in 5-9 Hz: %.10f dB\n', sumPower_5_9Hz);
+        fprintf('Theta-Ratio: %.10f dB\n', tRatio);
     end
     function showAllEpochsPSD(G)
         % 1) Clear G.A10 and hold on
         cla(G.A10);
         hold(G.A10, 'on');
 
-        % Welch analysis parameters
-        windowSeconds  = 4;      % sub-window length for Welch
-        overlapPercent = 0.9;    % 90% overlap
-        freqRange      = [0 20]; % show 0..20 Hz
-        fs             = 1 / G.dt;  % sampling rate
-
-        % Bins to display
-        n         = (G.show -1)/2;
         % PSD Bins
         centerBin = G.index;
-        centerBin_MinusFour = centerBin-4;
-        centerBin_MinusThree = centerBin-3;
-        centerBin_MinusTwo = centerBin-2;
-        centerBin_MinusOne = centerBin-1;
-        centerBin_PlusOne = centerBin+1;
-        centerBin_PlusTwo = centerBin+2;
-        centerBin_PlusThree = centerBin+3;
-        centerBin_PlusFour = centerBin+4;
-        % binStart  = centerBin - n;
-        % binEnd    = centerBin + n;
-        % fprintf("Bin start is: %d and Bin End is: %d\n", binStart, binEnd);
+        offsets = -4:4;            % Offsets from -4 to +4
+        bins = centerBin + offsets;
+        bins = max(bins, 1);         % Ensure no index is below 1
 
-        % We'll track min/max across all bins to standardize the y-scale
+        % Now assign individual variables if needed
+        centerBin_MinusFour   = bins(1);
+        centerBin_MinusThree  = bins(2);
+        centerBin_MinusTwo    = bins(3);
+        centerBin_MinusOne    = bins(4);
+        centerBin             = bins(5);
+        centerBin_PlusOne     = bins(6);
+        centerBin_PlusTwo     = bins(7);
+        centerBin_PlusThree   = bins(8);
+        centerBin_PlusFour    = bins(9);
+
+        % Current Bin Data
         current_data = getBinData(G, centerBin);
         [freq, psdVals] = computeBinPSD(current_data, fs, windowSeconds, overlapPercent);
-
         mask = (freq>= freqRange(1)) & (freq <= freqRange(2));
         freq = freq(mask);
         psdVals = psdVals(mask);
         psd_dB = psdVals;
         CalculateBandSums(freq, psd_dB);
-        psd_dB = psdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
+
+        % Color-code each frequency point in freq by 3 bands:
+        %    (0<=4 Hz => red), (4<=9 Hz => blue), (9<=15 Hz => green),
+        %    Else Gray
         cMap = zeros(length(freq), 3);  % each row = RGB
         for i = 1:length(freq)
             f = freq(i);
             if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
+                cMap(i,:) = DELTA_COLOR;      % red
             elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
+                cMap(i,:) = THETA_COLOR;      % blue
             elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
+                cMap(i,:) = ALPHA_COLOR;      % green
             else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
+                cMap(i,:) = ELSE_COLOR;       % gray
             end
         end
 
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (freq >= range(1)) & (freq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(psd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         b = bar(G.A10, freq, psd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin));
-
-        % Assign the color map
         b.CData = cMap;
-        % 9) Axis labeling
-        % xlabel(G.A10, 'Frequency (Hz)');
         xlim(G.A10, freqRange);
         grid(G.A10,'on');
-        % legend(G.A10,'show');  % show each bin in the legend
-        ylim(G.A10, [0, meanVal + 6*stdDev]);
+        ylim(G.A10, [0, PSD_Scale]);
         set(G.A10, 'YTickLabel', []);
         set(G.A10, 'XTickLabel', []);
         hold(G.A10, 'off');
 
 
-
-        % % -------
-        % We'll track min/max across all bins to standardize the y-scale
-        if centerBin <=2
-            centerBin_MinusOne = 1;
-            centerBin_MinusTwo = 1;
-            centerBin_MinusThree = 1;
-            centerBin_MinusFour = 1;
-        elseif centerBin ==3
-            centerBin_MinusOne = 2;
-            centerBin_MinusTwo = 1;
-            centerBin_MinusThree = 1;
-            centerBin_MinusFour = 1;
-        elseif centerBin == 4
-            centerBin_MinusOne = 3;
-            centerBin_MinusTwo = 2;
-            centerBin_MinusThree = 1;
-            centerBin_MinusFour = 1;
-        elseif centerBin == 5
-            centerBin_MinusOne = 4;
-            centerBin_MinusTwo = 3;
-            centerBin_MinusThree = 2;
-            centerBin_MinusFour = 1;
-        end
+        % CurrentBin - 1
         current_data_MO = getBinData(G, centerBin_MinusOne);
-
-
         [MOfreq, MOpsdVals] = computeBinPSD(current_data_MO, fs, windowSeconds, overlapPercent);
-
         MOmask = (MOfreq>= freqRange(1)) & (MOfreq <= freqRange(2));
         MOfreq = MOfreq(MOmask);
         MOpsdVals = MOpsdVals(MOmask);
         MOpsd_dB = MOpsdVals;
-        CalculateBandSums(MOfreq, MOpsd_dB);
-        MOpsd_dB = MOpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(MOfreq), 3);  % each row = RGB
-        for i = 1:length(MOfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (MOfreq >= range(1)) & (MOfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(MOpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         MOb = bar(G.A20, MOfreq, MOpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusOne));
-
-        % Assign the color map
         MOb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A20, freqRange);
         grid(G.A20,'on');
-        % legend(G.A20,'show');  % show each bin in the legend
-        ylim(G.A20, [0, meanVal + 6*stdDev]);
+        ylim(G.A20, [0, PSD_Scale]);
         set(G.A20, 'YTickLabel', []);
         set(G.A20, 'XTickLabel', []);
         hold(G.A20, 'off');
 
         % CurrentBin - 2
         current_data_MT = getBinData(G, centerBin_MinusTwo);
-
         [MTfreq, MTpsdVals] = computeBinPSD(current_data_MT, fs, windowSeconds, overlapPercent);
-
         MTmask = (MTfreq>= freqRange(1)) & (MTfreq <= freqRange(2));
         MTfreq = MTfreq(MTmask);
         MTpsdVals = MTpsdVals(MTmask);
         MTpsd_dB = MTpsdVals;
-        CalculateBandSums(MTfreq, MTpsd_dB);
-        MTpsd_dB = MTpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(MTfreq), 3);  % each row = RGB
-        for i = 1:length(MTfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (MTfreq >= range(1)) & (MTfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(MTpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         MTb = bar(G.A19, MTfreq, MTpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusTwo));
-
-        % Assign the color map
         MTb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A19, freqRange);
         grid(G.A19,'on');
-        % legend(G.A19,'show');  % show each bin in the legend
-        ylim(G.A19, [0, meanVal + 6*stdDev]);
+        ylim(G.A19, [0, PSD_Scale]);
         set(G.A19, 'YTickLabel', []);
         set(G.A19, 'XTickLabel', []);
         hold(G.A19, 'off');
 
-
           % CurrentBin - 3
         current_data_MTH = getBinData(G, centerBin_MinusThree);
-
         [MTHfreq, MTHpsdVals] = computeBinPSD(current_data_MTH, fs, windowSeconds, overlapPercent);
-
         MTHmask = (MTHfreq>= freqRange(1)) & (MTHfreq <= freqRange(2));
         MTHfreq = MTHfreq(MTHmask);
         MTHpsdVals = MTHpsdVals(MTHmask);
         MTHpsd_dB = MTHpsdVals;
-        CalculateBandSums(MTHfreq, MTHpsd_dB);
-        MTHpsd_dB = MTHpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(MTHfreq), 3);  % each row = RGB
-        for i = 1:length(MTHfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (MTHfreq >= range(1)) & (MTHfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(MTHpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         MTHb = bar(G.A18, MTHfreq, MTHpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusThree));
-
-        % Assign the color map
         MTHb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A18, freqRange);
         grid(G.A18,'on');
-        % legend(G.A18,'show');  % show each bin in the legend
-        ylim(G.A18, [0, meanVal + 6*stdDev]);
+        ylim(G.A18, [0, PSD_Scale]);
         set(G.A18, 'YTickLabel', []);
         set(G.A18, 'XTickLabel', []);
         hold(G.A18, 'off');
@@ -1181,580 +878,102 @@ message = 'Data loaded successfully';
 
         % CurrentBin - 4
         current_data_MF = getBinData(G, centerBin_MinusFour);
-
         [MFfreq, MFpsdVals] = computeBinPSD(current_data_MF, fs, windowSeconds, overlapPercent);
-
         MFmask = (MFfreq>= freqRange(1)) & (MFfreq <= freqRange(2));
         MFfreq = MFfreq(MFmask);
         MFpsdVals = MFpsdVals(MFmask);
         MFpsd_dB = MFpsdVals;
-        CalculateBandSums(MFfreq, MFpsd_dB);
-        MFpsd_dB = MFpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(MFfreq), 3);  % each row = RGB
-        for i = 1:length(MFfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (MFfreq >= range(1)) & (MFfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(MFpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         MFb = bar(G.A17, MFfreq, MFpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
-
-        % Assign the color map
         MFb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A17, freqRange);
         grid(G.A17,'on');
-        % legend(G.A17,'show');  % show each bin in the legend
-        ylim(G.A17, [0, meanVal + 6*stdDev]);
-        hold(G.A17, 'off');
-
-        % CurrentBin + 1
-        current_data_PO = getBinData(G, centerBin_PlusOne);
-
-        [POfreq, POpsdVals] = computeBinPSD(current_data_PO, fs, windowSeconds, overlapPercent);
-
-        POmask = (POfreq>= freqRange(1)) & (POfreq <= freqRange(2));
-        POfreq = POfreq(POmask);
-        POpsdVals = POpsdVals(POmask);
-        POpsd_dB = POpsdVals;
-        CalculateBandSums(POfreq, POpsd_dB);
-        POpsd_dB = POpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(POfreq), 3);  % each row = RGB
-        for i = 1:length(POfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (POfreq >= range(1)) & (POfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(POpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
-        POb = bar(G.A21, POfreq, POpsd_dB, 1, ...
-                'EdgeColor','none', ...
-                'FaceColor','flat', ...
-                'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
-
-        % Assign the color map
-        POb.CData = cMap;
-        % 9) Axis labeling
-        xlim(G.A21, freqRange);
-        grid(G.A21,'on');
-        % legend(G.A21,'show');  % show each bin in the legend
-        ylim(G.A21, [0, meanVal + 6*stdDev]);
-        set(G.A21, 'YTickLabel', []);
-        set(G.A21, 'XTickLabel', []);
-        hold(G.A21, 'off');
-
-        % CurrentBin +2
-        current_data_MF = getBinData(G, centerBin_MinusFour);
-
-        [MFfreq, MFpsdVals] = computeBinPSD(current_data_MF, fs, windowSeconds, overlapPercent);
-
-        MFmask = (MFfreq>= freqRange(1)) & (MFfreq <= freqRange(2));
-        MFfreq = MFfreq(MFmask);
-        MFpsdVals = MFpsdVals(MFmask);
-        MFpsd_dB = MFpsdVals;
-        CalculateBandSums(MFfreq, MFpsd_dB);
-        MFpsd_dB = MFpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(MFfreq), 3);  % each row = RGB
-        for i = 1:length(MFfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (MFfreq >= range(1)) & (MFfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(MFpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
-        MFb = bar(G.A17, MFfreq, MFpsd_dB, 1, ...
-                'EdgeColor','none', ...
-                'FaceColor','flat', ...
-                'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_MinusFour));
-
-        % Assign the color map
-        MFb.CData = cMap;
-        % 9) Axis labeling
-        xlim(G.A17, freqRange);
-        grid(G.A17,'on');
-        % legend(G.A17,'show');  % show each bin in the legend
-        ylim(G.A17, [0, meanVal + 6*stdDev]);
+        ylim(G.A17, [0, PSD_Scale]);
         hold(G.A17, 'off');
         xlabel(G.A17, 'Frequency (Hz)');
+        ylabel(G.A17, 'Power');
+
 
         % CurrentBin + 1
         current_data_PO = getBinData(G, centerBin_PlusOne);
-
         [POfreq, POpsdVals] = computeBinPSD(current_data_PO, fs, windowSeconds, overlapPercent);
-
         POmask = (POfreq>= freqRange(1)) & (POfreq <= freqRange(2));
         POfreq = POfreq(POmask);
         POpsdVals = POpsdVals(POmask);
         POpsd_dB = POpsdVals;
-        CalculateBandSums(POfreq, POpsd_dB);
-        POpsd_dB = POpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(POfreq), 3);  % each row = RGB
-        for i = 1:length(POfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (POfreq >= range(1)) & (POfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(POpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         POb = bar(G.A21, POfreq, POpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusOne));
-
-        % Assign the color map
         POb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A21, freqRange);
         grid(G.A21,'on');
-        % legend(G.A21,'show');  % show each bin in the legend
-        ylim(G.A21, [0, meanVal + 6*stdDev]);
+        ylim(G.A21, [0, PSD_Scale]);
         set(G.A21, 'YTickLabel', []);
         set(G.A21, 'XTickLabel', []);
         hold(G.A21, 'off');
 
-                % CurrentBin +2
+
+
+        % CurrentBin + 2
         current_data_PT = getBinData(G, centerBin_PlusTwo);
-
         [PTfreq, PTpsdVals] = computeBinPSD(current_data_PT, fs, windowSeconds, overlapPercent);
-
         PTmask = (PTfreq>= freqRange(1)) & (PTfreq <= freqRange(2));
         PTfreq = PTfreq(PTmask);
         PTpsdVals = PTpsdVals(PTmask);
         PTpsd_dB = PTpsdVals;
-        CalculateBandSums(MFfreq, PTpsd_dB);
-        PTpsd_dB = PTpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(PTfreq), 3);  % each row = RGB
-        for i = 1:length(PTfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (PTfreq >= range(1)) & (PTfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(PTpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         PTb = bar(G.A22, PTfreq, PTpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusTwo));
-
-        % Assign the color map
         PTb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A22, freqRange);
         grid(G.A22,'on');
-        % legend(G.A22,'show');  % show each bin in the legend
-        ylim(G.A22, [0, meanVal + 6*stdDev]);
+        ylim(G.A22, [0, PSD_Scale]);
         set(G.A22, 'YTickLabel', []);
         set(G.A22, 'XTickLabel', []);
         hold(G.A22, 'off');
 
         % CurrentBin + 3
         current_data_PTH = getBinData(G, centerBin_PlusThree);
-
         [PTHfreq, PTHpsdVals] = computeBinPSD(current_data_PTH, fs, windowSeconds, overlapPercent);
-
         PTHmask = (PTHfreq>= freqRange(1)) & (PTHfreq <= freqRange(2));
         PTHfreq = PTHfreq(PTHmask);
         PTHpsdVals = PTHpsdVals(PTHmask);
         PTHpsd_dB = PTHpsdVals;
-        CalculateBandSums(PTHfreq, PTHpsd_dB);
-        PTHpsd_dB = PTHpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(PTHfreq), 3);  % each row = RGB
-        for i = 1:length(PTHfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (POfreq >= range(1)) & (POfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(PTHpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         PTHb = bar(G.A23, PTHfreq, PTHpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusThree));
-
-        % Assign the color map
         PTHb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A23, freqRange);
         grid(G.A23,'on');
-        % legend(G.A23,'show');  % show each bin in the legend
-        ylim(G.A23, [0, meanVal + 6*stdDev]);
+        ylim(G.A23, [0, PSD_Scale]);
         set(G.A23, 'YTickLabel', []);
         set(G.A23, 'XTickLabel', []);
         hold(G.A23, 'off');
 
 
-                % CurrentBin + 4
+        % CurrentBin + 4
         current_data_PF = getBinData(G, centerBin_PlusFour);
-
         [PFfreq, PFpsdVals] = computeBinPSD(current_data_PF, fs, windowSeconds, overlapPercent);
-
         PFmask = (PFfreq>= freqRange(1)) & (PFfreq <= freqRange(2));
         PFfreq = PFfreq(PFmask);
         PFpsdVals = PFpsdVals(PFmask);
         PFpsd_dB = PFpsdVals;
-        CalculateBandSums(PFfreq, PFpsd_dB);
-        PFpsd_dB = PFpsdVals;
-        % 6) Color-code each frequency point in freq by 4 bands:
-        %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        cMap = zeros(length(PFfreq), 3);  % each row = RGB
-        for i = 1:length(PFfreq)
-            f = freq(i);
-            if f >= 0  && f <= 4
-                cMap(i,:) = [1, 0, 0];      % red
-            elseif f > 4  && f <= 9
-                cMap(i,:) = [0, 0, 1];      % blue
-            elseif f > 9 && f <= 15
-                cMap(i,:) = [0, 1, 0];      % green
-            else
-                cMap(i,:) = [0.5, 0.5, 0.5];% gray
-            end
-        end
-
-        % Define frequency bands and corresponding colors
-        bands = {
-            [0, 4],      [1 0 0];      % red for 0–4 Hz
-            [5, 9],      [0 0 1];      % blue for 5–9 Hz
-            [10, 15],    [0 1 0];      % green for 10–15 Hz
-            [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        };
-
-        nBands = size(bands, 1);
-        bandMeans = zeros(1, nBands);
-
-        % Calculate the mean PSD (in dB) for each frequency band
-        for b = 1:nBands
-            range = bands{b, 1};
-            idx = (PFfreq >= range(1)) & (PFfreq <= range(2));
-            if any(idx)
-                bandMeans(b) = mean(PFpsd_dB(idx));
-            else
-                bandMeans(b) = NaN;  % or 0 if you prefer
-            end
-        end
-
-        % 7) Create a bar chart for this bin's PSD
-        %    "FaceColor=flat" means we can assign colors via CData.
-        %    "FaceAlpha=0.3" for partial transparency.
         PFb = bar(G.A24, PFfreq, PFpsd_dB, 1, ...
                 'EdgeColor','none', ...
                 'FaceColor','flat', ...
                 'FaceAlpha',0.3);
-                % 'DisplayName', sprintf('Epoch# %d', centerBin_PlusFour));
-
-        % Assign the color map
         PFb.CData = cMap;
-        % 9) Axis labeling
         xlim(G.A24, freqRange);
         grid(G.A24,'on');
-        % legend(G.A24,'show');  % show each bin in the legend
-        ylim(G.A24, [0, meanVal + 6*stdDev]);
+        ylim(G.A24, [0, PSD_Scale]);
         set(G.A24, 'YTickLabel', []);
         set(G.A24, 'XTickLabel', []);
         hold(G.A24, 'off');
-
-        % for binIdx = binStart : binEnd
-        %     % 2) Extract data for this bin
-        %     data = getBinData(G, binIdx);
-        %
-        %
-        %
-        %     if isempty(data)
-        %         continue;  % skip invalid or out-of-bounds bin
-        %     end
-        %
-        %     % 3) Compute PSD (freq, psdVals) via Welch
-        %     [freq, psdVals] = computeBinPSD(data, fs, windowSeconds, overlapPercent);
-        %
-        %     localMax = max(psdVals);
-        %     localMin = min(psdVals);
-        %
-        %
-        %     % 4) Filter freq range
-        %     mask = (freq >= freqRange(1)) & (freq <= freqRange(2));
-        %     freq    = freq(mask);
-        %     psdVals = psdVals(mask);
-        %
-        %     % 5) Convert to dB if desired
-        %     % psd_dB = 10 * log10(psdVals);
-        %     psd_dB = psdVals;
-        %     CalculateBandSums(freq, psd_dB);
-        %     psd_dB = psdVals;
-        %
-        %     % 6) Color-code each frequency point in freq by 4 bands:
-        %     %    0-4 Hz => red, 5-9 Hz => blue, 10-15 Hz => green, 16-20 Hz => gray
-        %     cMap = zeros(length(freq), 3);  % each row = RGB
-        %     for i = 1:length(freq)
-        %         f = freq(i);
-        %         if f >= 0  && f <= 4
-        %             cMap(i,:) = [1, 0, 0];      % red
-        %         elseif f > 4  && f <= 9
-        %             cMap(i,:) = [0, 0, 1];      % blue
-        %         elseif f > 9 && f <= 15
-        %             cMap(i,:) = [0, 1, 0];      % green
-        %         else
-        %             cMap(i,:) = [0.5, 0.5, 0.5];% gray
-        %         end
-        %     end
-        %
-        %     % Define frequency bands and corresponding colors
-        %     bands = {
-        %         [0, 4],      [1 0 0];      % red for 0–4 Hz
-        %         [5, 9],      [0 0 1];      % blue for 5–9 Hz
-        %         [10, 15],    [0 1 0];      % green for 10–15 Hz
-        %         [16, 20],    [0.5 0.5 0.5] % gray for 16–20 Hz
-        %     };
-        %
-        %     nBands = size(bands, 1);
-        %     bandMeans = zeros(1, nBands);
-        %
-        %     % Calculate the mean PSD (in dB) for each frequency band
-        %     for b = 1:nBands
-        %         range = bands{b, 1};
-        %         idx = (freq >= range(1)) & (freq <= range(2));
-        %         if any(idx)
-        %             bandMeans(b) = mean(psd_dB(idx));
-        %         else
-        %             bandMeans(b) = NaN;  % or 0 if you prefer
-        %         end
-        %     end
-        %
-        %     % 7) Create a bar chart for this bin's PSD
-        %     %    "FaceColor=flat" means we can assign colors via CData.
-        %     %    "FaceAlpha=0.3" for partial transparency.
-        %     b = bar(G.A10, freq, psd_dB, 1, ...
-        %             'EdgeColor','none', ...
-        %             'FaceColor','flat', ...
-        %             'FaceAlpha',0.3, ...
-        %             'DisplayName', sprintf('Epoch# %d', binIdx));
-        %
-        %     % Assign the color map
-        %     b.CData = cMap;
-        %
-        % end
-        %
-        % % 9) Axis labeling
-        % xlabel(G.A10, 'Frequency (Hz)');
-        % xlim(G.A10, freqRange);
-        % grid(G.A10,'on');
-        % legend(G.A10,'show');  % show each bin in the legend
-        %
-        % % 10) Standardize y-lim across all bins
-        %     yRange = localMax - localMin;
-        %     ymin   = localMin - 0.1*yRange;
-        %     % ymax   = max(totalpsdVals);
-        %     ymax = localMax;
-        %     ylim(G.A10, [ymin, ymax]);
-        %
-        %
-        % hold(G.A10, 'off');
     end
 
     function data = getBinData(G, binIdx)
@@ -1785,7 +1004,6 @@ message = 'Data loaded successfully';
     function [freq, psdVals] = computeBinPSD(data, fs, windowSec, overlapPercent)
         N = length(data);
 
-        % sub-window length in samples:
         wlen = round(windowSec * fs);
         if wlen > N
             wlen = N;
@@ -1816,8 +1034,6 @@ message = 'Data loaded successfully';
         % Check if it's time to save file - 30 minutes is 450 keystrokes
         % 4 seconds x 15 = 60 [1 minute]
         % 15 * 30 = 450 keystrokes
-
-
         if G.keyPressCount == 450
             saveFile();
             G.keyPressCount = 0;
@@ -1951,27 +1167,18 @@ message = 'Data loaded successfully';
 
                 advance;
 
-
-
-
             case 'f' % save file
                 saveFile();
 
             case 'h' % show help menu
-                % showHelp(G.A1, []);
+                showHelp(G.A1, []);
 
             case 'multiply' % apply label to range of timepoints
                 t = text(G.A5,18.75,-.9,sprintf(['Move the ROI\n',...
                     'boundaries,\nand then\ndouble-click it',...
                     '\nor press\nescape']),'Color','r');
-                % axes(G.A1);
-                % set(G.A1,'Clipping','off')
-                % xl = xlim(G.A1);
-                d = diff(xl);
-                % roi = imrect(G.A1,[xl(1)+d/2 - d/24,-4.0287,d/12,4.9080]);
                 rectPosition = round(wait(roi)./(G.epochLen/3600));
                 roi.delete();
-                % set(G.A1,'Clipping','on')
                 if isempty(rectPosition)
                     delete(t);
                     return
@@ -2000,7 +1207,7 @@ message = 'Data loaded successfully';
 
         G.cmax = G.cmax - G.cmax/10;
         G.caxis1 = [G.caxis1(1), G.cmax];
-        caxis(G.A3,G.caxis1)
+        clim(G.A3,G.caxis1)
         updatePlots;
         defocus(src);
     end
@@ -2009,26 +1216,12 @@ message = 'Data loaded successfully';
 
         G.cmax = G.cmax + G.cmax/10;
         G.caxis1 = [G.caxis1(1), G.cmax];
-        caxis(G.A3,G.caxis1)
+        clim(G.A3,G.caxis1)
         updatePlots;
         defocus(src);
     end
 
-    function setState(src,~, a) % apply label to single time bin
-        evt= struct;
-        keys = {'r','w','s'};
-        evt.Key = keys{a};
-        keypress([], evt);
-        defocus(src);
-    end
     function recenterEEG()
-        % recenterEEG Re-center the EEG y-axis (G.A6a) so that the limits are symmetric about 0.
-        %
-        % This function checks the current y-axis limits (in volts) on G.A6a.
-        % It then calculates the smaller of the absolute values of the lower and
-        % upper limits and sets new limits as [-clipVal, clipVal].
-
-        % Retrieve current y-axis limits from G.A6a (in volts)
         currentYLim = get(G.A6, 'YLim');
 
         % Compute the absolute values of the lower and upper limits
@@ -2072,46 +1265,12 @@ message = 'Data loaded successfully';
         set(G.A7a, 'YLim', newYLim, 'YLimMode', 'manual');
 
     end
-    function setRange(src, ~) % apply label to range of time bins
-        evt= struct;
-        evt.Key = 'multiply';
-        keypress([], evt);
-        defocus(src);
-    end
 
     function fct_showmenu(src, ~)
 
        options = [1, 3, 5, 7, 9, 15];
         G.show = options(src.Value);
         G.mid = ceil(G.show/2);
-        updatePlots;
-        defocus(src);
-    end
-
-    function fct_shiftupEEG(src,~)
-
-        G.eegYlim = [G.eegYlim(1)+.04*diff(G.eegYlim), G.eegYlim(2)+.04*diff(G.eegYlim)];
-        updatePlots;
-        defocus(src);
-    end
-
-    function fct_shiftdownEEG(src,~)
-
-        G.eegYlim = [G.eegYlim(1)-.04*diff(G.eegYlim), G.eegYlim(2)-.04*diff(G.eegYlim)];
-        updatePlots;
-        defocus(src);
-    end
-
-    function fct_shiftupEMG(src,~)
-
-        G.emgYlim = [G.emgYlim(1)+.04*diff(G.emgYlim), G.emgYlim(2)+.04*diff(G.emgYlim)];
-        updatePlots;
-        defocus(src);
-    end
-
-    function fct_shiftdownEMG(src,~)
-
-        G.emgYlim = [G.emgYlim(1)-.04*diff(G.emgYlim), G.emgYlim(2)-.04*diff(G.emgYlim)];
         updatePlots;
         defocus(src);
     end
@@ -2217,12 +1376,6 @@ end
         axes(G.A3);
         xlim(G.lims);
         defocus(src);
-    end
-
-    function scrollCallback(a,~) % respond to user input in the auto-scroll box
-
-        G.advance = a.Value;
-        defocus(a);
     end
 
     function showHelp(src,~) % show help menu
